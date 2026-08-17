@@ -1,0 +1,43 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PM Assistant (terminale integrato)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/pm-assistant/bin/Debug/net8.0/pm-assistant.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/pm-assistant",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Server avviato su (https?://\\S+)",
+        "uriFormat": "%s/api/health"
+      }
+    },
+    {
+      "name": "PM Assistant (console esterna)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/pm-assistant/bin/Debug/net8.0/pm-assistant.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/pm-assistant",
+      "console": "externalTerminal",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Attach a processo",
+      "type": "coreclr",
+      "request": "attach"
+    }
+  ]
+}

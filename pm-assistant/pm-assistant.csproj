@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>pm-assistant</AssemblyName>
+    <RootNamespace>PmAssistant</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- Profilo di publish: eseguibile singolo autocontenuto per Windows x64 -->
+  <PropertyGroup Condition="'$(PublishProfile)' == 'win-standalone'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- LLM / OpenAI-compatible -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+
+    <!-- Google Sheets API -->
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.68.0.3525" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
+
+    <!-- Microsoft Graph API -->
+    <PackageReference Include="Microsoft.Graph" Version="5.60.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.61.3" />
+
+    <!-- Telegram Bot -->
+    <PackageReference Include="Telegram.Bot" Version="22.10.2" />
+
+    <!-- PDF Parsing -->
+    <PackageReference Include="PdfPig" Version="0.1.8" />
+
+    <!-- Git integration -->
+    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+
+    <!-- Word document generation -->
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
+
+    <!-- Hosting -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="keys\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Esclude completamente la cartella del test -->
+  <ItemGroup>
+    <Compile Remove="AgentWorkspace\**" />
+    <Content Remove="AgentWorkspace\**" />
+    <None Remove="AgentWorkspace\**" />
+  </ItemGroup>
+
+</Project>

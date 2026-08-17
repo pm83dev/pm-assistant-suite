@@ -1,0 +1,24 @@
+# Angular build output
+dist/
+tmp/
+
+# Node modules
+node_modules/
+
+# IDE / Editor files
+.vscode/settings.json
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# .NET build output
+TestApi/bin/
+TestApi/obj/
+
+# Environment variables (se presenti)
+.env.local

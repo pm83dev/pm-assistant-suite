@@ -1,0 +1,60 @@
+<!-- Riepilogo Time Tracking -->
+<div class="row mb-4">
+  <div class="col-md-3 col-6 mb-3">
+    <div class="card shadow-sm border-primary">
+      <div class="card-body text-center">
+        <h3 class="text-primary mb-0">{{ totalClienti }}</h3>
+        <small class="text-muted">Clienti</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 mb-3">
+    <div class="card shadow-sm border-success">
+      <div class="card-body text-center">
+        <h3 class="text-success mb-0">{{ totalProgetti }}</h3>
+        <small class="text-muted">Progetti</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 mb-3">
+    <div class="card shadow-sm border-warning">
+      <div class="card-body text-center">
+        <h3 class="text-warning mb-0">{{ totalOre.toFixed(1) }}</h3>
+        <small class="text-muted">Ore Totali</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 mb-3">
+    <div class="card shadow-sm border-info">
+      <div class="card-body text-center">
+        <h3 class="text-info mb-0">{{ oreUltimoMese.toFixed(1) }}</h3>
+        <small class="text-muted">Ore Ultimo Mese</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Accesso rapido -->
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark-header">
+        <h5 class="mb-0">Accesso Rapido</h5>
+      </div>
+      <div class="card-body">
+        <div class="btn-group w-100" role="group">
+          <a routerLink="/clienti" class="btn btn-outline-primary me-2">
+            <i class="bi bi-people"></i> Clienti
+          </a>
+          <a routerLink="/progetti" class="btn btn-outline-success me-2">
+            <i class="bi bi-folder"></i> Progetti
+          </a>
+          <a routerLink="/ore" class="btn btn-outline-warning me-2">
+            <i class="bi bi-clock"></i> Ore Lavorate
+          </a>
+          <a routerLink="/note" class="btn btn-outline-info"> <i class="bi bi-sticky"></i> Note </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

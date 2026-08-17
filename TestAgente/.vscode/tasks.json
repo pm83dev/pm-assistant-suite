@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Avvia Backend (.NET)",
+      "type": "shell",
+      "command": "dotnet run",
+      "cwd": "${workspaceFolder}/TestApi",
+      "problemMatcher": "$msCompile",
+      "isBackground": true,
+      "presentation": {
+        "group": "backend",
+        "reveal": "silent"
+      },
+      "dependsOn": "Build Backend"
+    },
+    {
+      "label": "Build Backend",
+      "type": "shell",
+      "command": "dotnet build TestApi.csproj",
+      "cwd": "${workspaceFolder}/TestApi",
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "Avvia Frontend (Angular)",
+      "type": "shell",
+      "command": "ng serve",
+      "cwd": "${workspaceFolder}/TestFrontend",
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Angular CLI: All processes running on port.*"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "group": "frontend",
+        "reveal": "silent"
+      }
+    }
+  ]
+}

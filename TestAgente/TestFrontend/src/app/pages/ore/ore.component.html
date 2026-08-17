@@ -1,0 +1,93 @@
+<div class="container">
+  <div class="header">
+    <h2>Ore Lavorate</h2>
+    <button class="btn btn-primary" (click)="openNewForm()">+ Nuova Registrazione</button>
+  </div>
+
+  <!-- Form -->
+  <div class="form-container" *ngIf="showForm">
+    <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
+    <form (ngSubmit)="save()">
+      <div class="form-group">
+        <label>Progetto *</label>
+        <select [(ngModel)]="form.progettoId" name="progettoId" required>
+          <option value="0">-- Seleziona Progetto --</option>
+          <option *ngFor="let p of progetti" [value]="p.id">{{ p.nome }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Data *</label>
+        <input type="date" [(ngModel)]="form.data" name="data" required />
+      </div>
+      <div class="form-group">
+        <label>Ore *</label>
+        <input type="number" [(ngModel)]="form.ore" name="ore" min="0.25" step="0.25" required placeholder="Es: 2.5" />
+      </div>
+      <div class="form-group">
+        <label>Descrizione</label>
+        <textarea [(ngModel)]="form.descrizione" name="descrizione" rows="3" placeholder="Cosa hai fatto?"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success">Salva</button>
+        <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Riepilogo -->
+  <div class="summary">
+    <strong>Totale Ore:</strong> {{ getTotalOre().toFixed(1) }}h
+  </div>
+
+  <!-- Calendario Ore -->
+  <div class="calendar-container" *ngIf="calendarView.length > 0">
+    <div class="month-view" *ngFor="let month of calendarView">
+      <h3 class="month-title">{{ month.month }} {{ month.year }}</h3>
+      <div class="calendar-grid">
+        <div class="day-header">Lun</div>
+        <div class="day-header">Mar</div>
+        <div class="day-header">Mer</div>
+        <div class="day-header">Gio</div>
+        <div class="day-header">Ven</div>
+        <div class="day-header">Sab</div>
+        <div class="day-header">Dom</div>
+
+        <!-- Celle dei giorni -->
+        <div class="day-cell" *ngFor="let day of month.days"
+             [class.empty]="day.day === 0"
+             [class.today]="isToday(day.date)"
+             [class.has-entries]="day.hasEntries"
+             (click)="day.hasEntries ? showDayDetails(day.entries || [], day.date) : null"
+             [attr.title]="getDayTooltip(day)">
+          <span class="day-number">{{ day.day }}</span>
+          <span class="day-ore" *ngIf="day.ore > 0">
+            {{ day.ore.toFixed(1) }}h
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="oreLavorate.length === 0">
+      Nessuna registrazione presente. Aggiungi la tua prima ora lavorata!
+    </div>
+  </div>
+
+  <!-- Dettagli giorno -->
+  <div class="day-details" *ngIf="selectedDayEntries.length > 0">
+    <h3>{{ selectedDayDate }}</h3>
+    <div class="day-entries">
+      <div class="card" *ngFor="let o of selectedDayEntries">
+        <div class="card-header">
+          <div>
+            <span class="badge" [style.background]="getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))" [style.color]="'#e8f0fe'" [style.border]="'1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))">{{ getClienteNomeDaProgetto(o.progettoId) }}</span>
+            <span class="badge" [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))" [style.color]="'#e8f5e9'" [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))">{{ getProgettoNome(o.progettoId) }}</span>
+          </div>
+          <div class="ore-amount">{{ o.ore }}h</div>
+        </div>
+        <div class="card-body">
+          <p *ngIf="o.descrizione"><strong>Dettaglio:</strong> {{ o.descrizione }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

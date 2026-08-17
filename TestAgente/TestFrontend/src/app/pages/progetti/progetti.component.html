@@ -1,0 +1,53 @@
+<div class="container">
+  <div class="header">
+    <h2>Progetti</h2>
+    <button class="btn btn-primary" (click)="openNewForm()">+ Nuovo Progetto</button>
+  </div>
+
+  <!-- Form -->
+  <div class="form-container" *ngIf="showForm">
+    <h3>{{ editMode ? 'Modifica Progetto' : 'Nuovo Progetto' }}</h3>
+    <form (ngSubmit)="save()">
+      <div class="form-group">
+        <label>Cliente *</label>
+        <select [(ngModel)]="form.clienteId" name="clienteId" required>
+          <option value="0">-- Seleziona Cliente --</option>
+          <option *ngFor="let c of clienti" [value]="c.id">{{ c.nome }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nome Progetto *</label>
+        <input type="text" [(ngModel)]="form.nome" name="nome" required placeholder="Nome progetto" />
+      </div>
+      <div class="form-group">
+        <label>Descrizione</label>
+        <textarea [(ngModel)]="form.descrizione" name="descrizione" rows="3" placeholder="Descrizione del progetto"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success">Salva</button>
+        <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista Progetti -->
+  <div class="list-container">
+    <div class="card" *ngFor="let p of progetti" [class.selected]="selectedProgetto?.id === p.id">
+      <div class="card-header">
+        <h3>{{ p.nome }}</h3>
+        <span class="badge" [style.background]="getBadgeBackground(getClienteNome(p.clienteId))" [style.color]="'#e8f0fe'" [style.border]="'1px solid ' + getBadgeBorder(getClienteNome(p.clienteId))">{{ getClienteNome(p.clienteId) }}</span>
+        <div class="actions">
+          <button class="btn btn-sm btn-edit" (click)="openEditForm(p)">Modifica</button>
+          <button class="btn btn-sm btn-delete" (click)="delete(p.id)">Elimina</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <p *ngIf="p.descrizione"><strong>Descrizione:</strong> {{ p.descrizione }}</p>
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="progetti.length === 0">
+      Nessun progetto presente. Aggiungi il tuo primo progetto!
+    </div>
+  </div>
+</div>

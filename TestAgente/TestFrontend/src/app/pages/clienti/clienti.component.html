@@ -1,0 +1,55 @@
+<div class="container">
+  <div class="header">
+    <h2>Clienti</h2>
+    <button class="btn btn-primary" (click)="openNewForm()">+ Nuovo Cliente</button>
+  </div>
+
+  <!-- Form -->
+  <div class="form-container" *ngIf="showForm">
+    <h3>{{ editMode ? 'Modifica Cliente' : 'Nuovo Cliente' }}</h3>
+    <form (ngSubmit)="save()">
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" [(ngModel)]="form.nome" name="nome" required placeholder="Nome cliente" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="form.email" name="email" placeholder="email@esempio.com" />
+      </div>
+      <div class="form-group">
+        <label>Telefono</label>
+        <input type="tel" [(ngModel)]="form.telefono" name="telefono" placeholder="+39 ..." />
+      </div>
+      <div class="form-group">
+        <label>Indirizzo</label>
+        <input type="text" [(ngModel)]="form.indirizzo" name="indirizzo" placeholder="Via, Città" />
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success">Salva</button>
+        <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista Clienti -->
+  <div class="list-container">
+    <div class="card" *ngFor="let c of clienti" [class.selected]="selectedCliente?.id === c.id">
+      <div class="card-header">
+        <h3>{{ c.nome }}</h3>
+        <div class="actions">
+          <button class="btn btn-sm btn-edit" (click)="openEditForm(c)">Modifica</button>
+          <button class="btn btn-sm btn-delete" (click)="delete(c.id)">Elimina</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <p *ngIf="c.email"><strong>Email:</strong> {{ c.email }}</p>
+        <p *ngIf="c.telefono"><strong>Telefono:</strong> {{ c.telefono }}</p>
+        <p *ngIf="c.indirizzo"><strong>Indirizzo:</strong> {{ c.indirizzo }}</p>
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="clienti.length === 0">
+      Nessun cliente presente. Aggiungi il tuo primo cliente!
+    </div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+.btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+.btn-primary { background: #0d6efd; color: #e0e0e0; }
+.btn-success { background: #198754; color: #e0e0e0; }
+.btn-secondary { background: #6c757d; color: #e0e0e0; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-edit { background: #ffc107; color: #333; }
+.btn-delete { background: #dc3545; color: white; }
+.btn:hover { opacity: 0.9; }
+
+.form-container { background: #2c2c2c; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; background: #1e1e1e; color: #e0e0e0; }
+.form-actions { display: flex; gap: 10px; margin-top: 15px; }
+
+.card { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.card.selected { border-color: #007bff; box-shadow: 0 0 0 2px rgba(0,123,255,0.3); }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+.card-header > div:first-child { display: flex; gap: 10px; align-items: center; }
+.date { font-weight: bold; color: #e0e0e0; }
+.badge { background: #3a3a3a; color: #ccc; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+.actions { display: flex; gap: 5px; }
+
+.card-body h4 { margin: 0 0 5px 0; color: #e0e0e0; }
+.card-body p { margin: 5px 0; color: #ccc; white-space: pre-wrap; }
+
+.empty { text-align: center; padding: 40px; color: #999; }
+
+@media (max-width: 600px) {
+  .header { flex-direction: column; gap: 10px; }
+  .card-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+  .actions { width: 100%; justify-content: flex-end; }
+}

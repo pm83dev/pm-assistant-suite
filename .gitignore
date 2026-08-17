@@ -1,0 +1,76 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+!packages/repositories.config
+*.nuget.props
+*.nuget.targets
+
+# .NET Core
+project.assets.json
+project.packagespec
+*.csproj.nuget.*
+
+# Rider
+.idea/
+*.sln.ide
+
+# Windows files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Service account keys (SENSITIVE - NEVER commit)
+keys/*.json
+
+# Agent workspace
+AgentWorkspace/
+
+# Temporary files
+Temp/
+*.tmp
+*.log
+pm-assistant/keys/service-account.json
+
+# Local app config (contains secrets) - see appsettings.Example.json for the template
+pm-assistant/appsettings.json
+
+# Publish/build output
+dist/
+publish/
+
+# Node / Angular
+node_modules/
+.angular/
+TestAgente/TestFrontend/dist/
+
+# SQLite local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Workspace indexes / local state
+.pm_workspace_index.json
+.pm_todo_state.json

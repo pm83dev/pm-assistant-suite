@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Avvia Backend (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/TestApi/bin/Debug/net8.0/TestApi.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/TestApi",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "serverReadyAction": {
+        "pattern": "Now listening on: http://localhost:(?<port>\\d+)",
+        "uriFormat": "http://localhost:{port}/swagger",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "Avvia Frontend (Angular)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "ng serve",
+      "cwd": "${workspaceFolder}/TestFrontend",
+      "serverReadyAction": {
+        "pattern": "Local: http://localhost:(?<port>\\d+)",
+        "uriFormat": "http://localhost:{port}",
+        "action": "openExternally"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Backend + Frontend",
+      "configurations": ["Avvia Backend (.NET)", "Avvia Frontend (Angular)"],
+      "preLaunchTask": "Avvia Backend (.NET)"
+    }
+  ]
+}
