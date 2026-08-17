@@ -1,6 +1,6 @@
-using TestApi.Models;
+using OreTracking.Api.Models;
 
-namespace TestApi.Services;
+namespace OreTracking.Api.Services;
 
 public interface IDataRepository : IDisposable
 {

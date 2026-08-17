@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using TestApi.Services;
+using OreTracking.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

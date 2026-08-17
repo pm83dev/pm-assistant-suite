@@ -16,6 +16,48 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "build-ore-api",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/ore-tracking/Api/Api.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "run-ore-api",
+      "type": "shell",
+      "command": "dotnet run",
+      "cwd": "${workspaceFolder}/ore-tracking/Api",
+      "problemMatcher": "$msCompile",
+      "isBackground": true,
+      "dependsOn": "build-ore-api"
+    },
+    {
+      "label": "run-ore-web",
+      "type": "shell",
+      "command": "ng serve",
+      "cwd": "${workspaceFolder}/ore-tracking/Web",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Angular CLI: All processes running on port.*"
+        }
+      }
     }
   ]
 }

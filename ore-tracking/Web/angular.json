@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "my-app": {
+    "ore-web": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -18,7 +18,7 @@
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
-            "outputPath": "dist/my-app",
+            "outputPath": "dist/ore-web",
             "index": "src/index.html",
             "assets": [
               {
@@ -61,10 +61,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "my-app:build:production"
+              "buildTarget": "ore-web:build:production"
             },
             "development": {
-              "buildTarget": "my-app:build:development"
+              "buildTarget": "ore-web:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>OreTracking.Api</AssemblyName>
+    <RootNamespace>OreTracking.Api</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,8 +21,8 @@
 
   <!-- Percorso frontend -->
   <PropertyGroup>
-    <FrontendRoot>$(MSBuildThisFileDirectory)..\TestFrontend</FrontendRoot>
-    <FrontendDist>$(FrontendRoot)\dist\my-app\browser</FrontendDist>
+    <FrontendRoot>$(MSBuildThisFileDirectory)..\Web</FrontendRoot>
+    <FrontendDist>$(FrontendRoot)\dist\ore-web\browser</FrontendDist>
   </PropertyGroup>
 
   <!-- Pre-build: compila Angular prima di build/publish .NET -->

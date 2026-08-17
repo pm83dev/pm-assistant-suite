@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0..\TestFrontend"
+cd /d "%~dp0..\Web"
 if not exist node_modules (
   npm install
 )

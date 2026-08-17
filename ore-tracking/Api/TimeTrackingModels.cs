@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TestApi.Models;
+namespace OreTracking.Api.Models;
 
 public class Cliente
 {

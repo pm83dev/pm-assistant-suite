@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TestApi.Services;
+using OreTracking.Api.Services;
 
 #nullable disable
 
-namespace TestApi.Migrations
+namespace OreTracking.Api.Migrations
 {
     [DbContext(typeof(DataContext))]
     [Migration("20260811200008_InitialCreate")]

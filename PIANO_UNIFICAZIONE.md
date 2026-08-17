@@ -1,9 +1,11 @@
 # Piano di unificazione — Assistente unico (ore + agente locale stile Claude Desktop)
 
-Data: 2026-08-17
+Data: 2026-08-17 (aggiornato lo stesso giorno dopo il rename dei progetti)
 Decisioni utente raccolte in sessione:
-- Backend ore definitivo: **TestAgente** (TestApi + SQLite + TestFrontend Angular), non Google Sheets.
+- Backend ore definitivo: **ore-tracking** (ex `TestAgente`: `Api` + SQLite + `Web` Angular), non Google Sheets.
 - L'agente "stile Claude Desktop" non deve limitarsi al coding: deve fare anche supporto/creazione documenti, istruzioni sul sistema operativo, assistenza generica.
+- Repo Git: unificato in un unico repo con history pulita, separato dai vecchi `pm-assistant.git`/`test-agente.git`.
+- Nomi sistemati: `TestAgente/` → `ore-tracking/`, `TestApi/` → `ore-tracking/Api/` (namespace `OreTracking.Api`, assembly `OreTracking.Api`), `TestFrontend/` → `ore-tracking/Web/` (progetto Angular `ore-web`). Creata `pm-assistant-suite.slnx` in radice con entrambi i progetti .NET.
 
 ## 1. Stato attuale verificato
 
@@ -25,15 +27,15 @@ Nella cartella ci sono **due progetti distinti**, non uno solo con leftover:
   Sono compilati (il `.csproj` include tutti i `.cs` per default, esclude solo `AgentWorkspace/`), ma **nessuna riga di `Program.cs` li istanzia o li chiama**. È il vecchio "Local Code Agent" descritto nel `README.md` di `pm-assistant/` e in `CLAUDE.md`, mai ricollegato dopo il merge nel progetto Secretary.
   Questo è il pezzo che serve per fare da "Claude Desktop locale": legge/scrive file, esegue comandi PowerShell (sandbox su `WorkspaceContext`), fa `git`, cerca sul web (`WebTools`).
 
-### 1.2 `TestAgente/` (repo Git separato, indipendente da `pm-assistant`)
+### 1.2 `ore-tracking/` (ex `TestAgente/`, repo separato dal punto di vista logico ma ora nello stesso repo Git unificato)
 
-- `TestApi/` — ASP.NET Core Web API .NET 8, EF Core + SQLite (`app.db`), `TimeTrackingController` con CRUD completo per **Clienti, Progetti, OreLavorate, Note** sotto `/api/time-tracking/*`. Swagger su `/swagger`. Porta default `http://localhost:5108` (profilo `http` in `launchSettings.json`).
-- `TestFrontend/` — Angular 20 (Vite), pagine Dashboard/Clienti/Progetti/Ore/Note, consuma l'API sopra.
-- Ha il proprio `AGENTS.md` che conferma: è un'app reale di gestione ore, generata in precedenza usando l'agente su questo stesso workspace (nome coincide con `pm-assistant/AgentWorkspace/TestAgenteBackend`).
+- `Api/` (ex `TestApi/`) — ASP.NET Core Web API .NET 8, EF Core + SQLite (`app.db`), namespace `OreTracking.Api`, `TimeTrackingController` con CRUD completo per **Clienti, Progetti, OreLavorate, Note** sotto `/api/time-tracking/*`. Swagger su `/swagger`. Porta default `http://localhost:5108` (profilo `http` in `launchSettings.json`).
+- `Web/` (ex `TestFrontend/`) — Angular 20 (Vite), progetto `ore-web`, pagine Dashboard/Clienti/Progetti/Ore/Note, consuma l'API sopra.
+- Ha il proprio `AGENTS.md` che conferma: è un'app reale di gestione ore, generata in precedenza usando l'agente su questo stesso workspace (nome coincideva con `pm-assistant/AgentWorkspace/TestAgenteBackend`).
 
 **Conclusione stato attuale**: non serve "unire codice C# in un solo progetto". Servono due collegamenti mancanti:
 1. Ricollegare il Sistema B (tool ReAct) dentro `pm-assistant`, così l'assistente può agire (file, terminale, git, web) e non solo chattare.
-2. Far parlare `pm-assistant` con `TestApi` (TestAgente) per le operazioni di ore/clienti/progetti, al posto di Google Sheets.
+2. Far parlare `pm-assistant` con `ore-tracking/Api` per le operazioni di ore/clienti/progetti, al posto di Google Sheets.
 
 ## 2. Nota di sicurezza (fuori scope, da correggere a parte)
 
@@ -55,18 +57,18 @@ Utente (Telegram / console CLI / eventuale UI web)
                ├── GitTools
                ├── WebTools         (ricerca web)
                ├── AgentTools       (workspace tree)
-               └── OreTrackingTools (NUOVO: HTTP client verso TestApi)
+               └── OreTrackingTools (NUOVO: HTTP client verso ore-tracking/Api)
                                         │
                                         ▼
-                              TestApi (TestAgente) — SQLite
+                              ore-tracking/Api — SQLite
                               Clienti / Progetti / OreLavorate / Note
-                              (resta un processo separato, con la sua UI Angular)
+                              (resta un processo separato, con la sua UI Angular in ore-tracking/Web)
 ```
 
 Punti chiave della scelta:
-- **`TestApi` resta un servizio a sé stante**, non viene fuso dentro `pm-assistant`. Motivi: ha già una UI Angular funzionante, un proprio DB EF/SQLite, un proprio repo Git — fonderlo dentro l'host ASP.NET di `pm-assistant` vorrebbe dire risolvere conflitti di porte/EF/migrazioni senza alcun vantaggio reale. `pm-assistant` gli parla via HTTP, come farebbe qualunque altro client (esattamente come fa già `TestFrontend`).
+- **`ore-tracking/Api` resta un servizio a sé stante**, non viene fuso dentro `pm-assistant`. Motivi: ha già una UI Angular funzionante, un proprio DB EF/SQLite — fonderlo dentro l'host ASP.NET di `pm-assistant` vorrebbe dire risolvere conflitti di porte/EF/migrazioni senza alcun vantaggio reale. `pm-assistant` gli parla via HTTP, come farebbe qualunque altro client (esattamente come fa già `ore-tracking/Web`).
 - Il bot Telegram e (nuova) la CLI console diventano due "canali" che parlano allo **stesso** `AssistantAgentService` con tool calling, così l'utente ha un solo assistente, non due comportamenti diversi a seconda del canale.
-- Google Sheets (`GoogleSheetsService`, `DailyEntryManager`) va **disattivato/deprecato** come sorgente ore, ma **non cancellato subito**: `MonthlyConsolidator`/`MonthlySummaryService` (riconciliazione PDF cliente vs log per Fiscozen) oggi leggono da Sheets e vanno riscritti per leggere da `TestApi` prima di poter spegnere Sheets del tutto.
+- Google Sheets (`GoogleSheetsService`, `DailyEntryManager`) va **disattivato/deprecato** come sorgente ore, ma **non cancellato subito**: `MonthlyConsolidator`/`MonthlySummaryService` (riconciliazione PDF cliente vs log per Fiscozen) oggi leggono da Sheets e vanno riscritti per leggere da `ore-tracking/Api` prima di poter spegnere Sheets del tutto.
 
 ## 4. Piano d'azione, passo per passo
 
@@ -76,7 +78,7 @@ Punti chiave della scelta:
    - Registrare `ToolDispatcher` in DI (`builder.Services.AddSingleton<ToolDispatcher>()`), iniettarlo in `AssistantAgentService`.
 
 2. **Aggiungere `OreTrackingTools.cs`**
-   - Nuova classe tool (stesso pattern di `FileSystemTools`/`GitTools`) che wrappa `TestApi` via `HttpClient`: `list_clienti`, `create_cliente`, `list_progetti`, `create_progetto`, `log_ora_lavorata`, `list_ore_by_progetto`, `add_nota`, ecc. — un tool per ciascun endpoint utile di `TimeTrackingController`.
+   - Nuova classe tool (stesso pattern di `FileSystemTools`/`GitTools`) che wrappa `ore-tracking/Api` via `HttpClient`: `list_clienti`, `create_cliente`, `list_progetti`, `create_progetto`, `log_ora_lavorata`, `list_ore_by_progetto`, `add_nota`, ecc. — un tool per ciascun endpoint utile di `TimeTrackingController`.
    - Aggiungere in `appsettings.json` una sezione tipo:
      ```json
      "TimeTrackingApi": { "BaseUrl": "http://localhost:5108" }
@@ -91,15 +93,15 @@ Punti chiave della scelta:
    - Aggiungere una modalità CLI: `dotnet run -- --cli` (o comando REPL separato) che riusa `ConsoleHelper`/`SessionManager` già presenti per un loop interattivo da terminale, con lo stesso `ToolDispatcher` — per uso locale rapido senza passare da Telegram.
    - Estendere i tool oltre al coding, per il caso d'uso "assistente generico" richiesto: `FileSystemTools`/`TerminalTools` già coprono creazione file, esecuzione comandi OS, ricerca; se serve generare documenti Office (docx/xlsx) o PDF in output (non solo parsing, che oggi c'è solo con `PdfPig` in lettura), va aggiunta una libreria di generazione (es. `DocumentFormat.OpenXml` o `QuestPDF`) e un nuovo `DocumentTools.cs`.
 
-5. **`TestAgente/` come repo indipendente**
-   - Nessuna fusione di repository Git necessaria. `TestAgente/` resta una cartella sorella con il proprio `.git`, avviata separatamente (`TestApi` su `dotnet run`, `TestFrontend` su `ng serve`). `pm-assistant` la consuma solo via HTTP.
-   - Se in futuro si vuole un unico comando di avvio, si può aggiungere uno script (`start-all.ps1`) che lancia i tre processi (`pm-assistant`, `TestApi`, `TestFrontend`) in parallelo — non prioritario ora.
+5. **`ore-tracking/` avviato separatamente ma nello stesso repo**
+   - `ore-tracking/Api` (`dotnet run`) e `ore-tracking/Web` (`ng serve`) restano due processi distinti da `pm-assistant`, ma ora vivono nello stesso repo Git e nella stessa `pm-assistant-suite.slnx` (solo i due progetti .NET sono in solution; Angular si builda/avvia a parte). `pm-assistant` consuma `ore-tracking/Api` solo via HTTP.
+   - Se in futuro si vuole un unico comando di avvio, si può aggiungere uno script (`start-all.ps1`) che lancia i tre processi (`pm-assistant`, `ore-tracking/Api`, `ore-tracking/Web`) in parallelo — non prioritario ora. Configurazioni di debug/task già pronte in `.vscode/launch.json` e `.vscode/tasks.json` alla radice.
 
 6. **Test end-to-end da fare dopo l'implementazione**
-   - Da Telegram: "segna 3 ore sul progetto X per il cliente Y" → verificare che arrivi una riga in `TestApi`/SQLite.
+   - Da Telegram: "segna 3 ore sul progetto X per il cliente Y" → verificare che arrivi una riga in `ore-tracking/Api`/SQLite.
    - Da CLI locale: chiedere di leggere/modificare un file nel workspace sandbox, eseguire un comando PowerShell, verificare che il path traversal resti bloccato.
    - Verificare che il blocco comandi distruttivi di `TerminalTools` (rm -rf, format, ecc.) sia ancora attivo dopo il refactor.
-   - Riconciliazione mensile: verificare che `MonthlyConsolidator` produca lo stesso tipo di output testuale per Fiscozen, ma leggendo da `TestApi`.
+   - Riconciliazione mensile: verificare che `MonthlyConsolidator` produca lo stesso tipo di output testuale per Fiscozen, ma leggendo da `ore-tracking/Api`.
 
 ## 5. Decisioni ancora aperte (da confermare quando si arriva al punto)
 

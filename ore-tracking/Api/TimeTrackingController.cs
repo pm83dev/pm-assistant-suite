@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using TestApi.Models;
-using TestApi.Services;
+using OreTracking.Api.Models;
+using OreTracking.Api.Services;
 
-namespace TestApi.Controllers;
+namespace OreTracking.Api.Controllers;
 
 [ApiController]
 [Route("api/time-tracking")]
