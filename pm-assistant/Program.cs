@@ -46,6 +46,9 @@ builder.Services.Configure<List<GraphAccountConfig>>(builder.Configuration.GetSe
 // ── Google Search Settings ────────────────────────────────────────────────────
 var searchSection = builder.Configuration.GetSection("GoogleSearch");
 
+// ── Time Tracking API Settings ────────────────────────────────────────────────
+var timeTrackingSection = builder.Configuration.GetSection("TimeTrackingApi");
+
 // ── ToolDispatcher & Workspace ────────────────────────────────────────────────
 var workspacePath = Path.Combine(AppContext.BaseDirectory, "AgentWorkspace");
 var workspace = new LocalCodeAgent.Core.WorkspaceContext(workspacePath);
@@ -55,7 +58,8 @@ builder.Services.AddSingleton<ToolDispatcher>(sp =>
         workspace,
         googleSearchApiKey: searchSection["ApiKey"],
         googleSearchCx: searchSection["Cx"],
-        sheetsService: sp.GetService<IGoogleSheetsService>()));
+        sheetsService: sp.GetService<IGoogleSheetsService>(),
+        oreTrackingBaseUrl: timeTrackingSection["BaseUrl"]));
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<IGraphAuthService, GraphAuthService>();

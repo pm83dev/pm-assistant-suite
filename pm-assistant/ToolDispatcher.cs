@@ -20,19 +20,21 @@ public class ToolDispatcher
     private readonly WebTools _web;
     private readonly GoogleSheetsTools _sheets;
     private readonly WordDocTools _worddoc;
+    private readonly OreTrackingTools _ore;
 
     // Cache read_file: path → contenuto già letto (soft-block su duplicati)
     private readonly Dictionary<string, string> _fileCache =
         new(StringComparer.OrdinalIgnoreCase);
 
 
-    public ToolDispatcher(WorkspaceContext workspace, string? googleSearchApiKey = null, string? googleSearchCx = null, IGoogleSheetsService? sheetsService = null)
+    public ToolDispatcher(WorkspaceContext workspace, string? googleSearchApiKey = null, string? googleSearchCx = null, IGoogleSheetsService? sheetsService = null, string? oreTrackingBaseUrl = null)
     {
         _fs = new FileSystemTools(workspace);
         _terminal = new TerminalTools(workspace);
         _agent = new AgentTools(workspace);
         _git = new GitTools(workspace);
         _web = new WebTools(googleSearchApiKey, googleSearchCx);
+        _ore = new OreTrackingTools(string.IsNullOrWhiteSpace(oreTrackingBaseUrl) ? "http://localhost:5108" : oreTrackingBaseUrl);
 
         // Initialize GoogleSheetsTools if service is provided (optional for offline mode)
         _sheets = sheetsService != null
@@ -87,7 +89,8 @@ public class ToolDispatcher
         .._agent.Definitions,
         .._web.Definitions,
         .._sheets.Definitions,
-        .._worddoc.Definitions
+        .._worddoc.Definitions,
+        .._ore.Definitions
     ];
 
     public List<ToolDefinition> GetDefinitionsByCategory(string category) =>
@@ -99,6 +102,7 @@ public class ToolDispatcher
             "agent" => [.. _agent.Definitions],
             "web" => [.. _web.Definitions],
             "sheets" => [.. _sheets.Definitions],
+            "ore" => [.. _ore.Definitions],
             _ => []
         };
 
@@ -156,6 +160,10 @@ public class ToolDispatcher
         // Word document — su task che richiedono creazione documenti
         if (Has(lc, "word", "docx", "documento word", "crea documento", "create_word_doc"))
             defs.AddRange(_worddoc.Definitions);
+
+        // Ore tracking — su task che richiedono ore/clienti/progetti/note del time-tracking
+        if (Has(lc, "ora", "ore", "cliente", "clienti", "progetto", "progetti", "fattur", "nota", "note lavorate", "time tracking", "time-tracking"))
+            defs.AddRange(_ore.Definitions);
 
         return [.. defs.DistinctBy(t => t.Function.Name)];
     }
@@ -245,6 +253,10 @@ public class ToolDispatcher
         // Word document tools
         if (_worddoc.Definitions.Any(t => t.Function.Name == toolName))
             return _worddoc.Execute(toolName, argumentsJson);
+
+        // Ore tracking (ore-tracking/Api via HTTP)
+        if (toolName.StartsWith("ore_"))
+            return _ore.Execute(toolName, argumentsJson);
 
         return $"Tool '{toolName}' non registrato nel dispatcher.";
     }
