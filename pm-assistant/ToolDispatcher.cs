@@ -261,6 +261,17 @@ public class ToolDispatcher
         return $"Tool '{toolName}' non registrato nel dispatcher.";
     }
 
+    // Metodi asincroni per tool che supportano operazioni I/O (es. OreTrackingTools)
+    public async Task<string> ExecuteAsync(string toolName, string argumentsJson)
+    {
+        // Ore tracking (ore-tracking/Api via HTTP) - unico tool con metodi asincroni al momento
+        if (toolName.StartsWith("ore_"))
+            return await _ore.ExecuteAsync(toolName, argumentsJson);
+
+        // Fallback: esegui sincrono
+        return Execute(toolName, argumentsJson);
+    }
+
     private static string BuildFileSummary(string path, string cachedContent)
     {
         var ext = Path.GetExtension(path).ToLowerInvariant();

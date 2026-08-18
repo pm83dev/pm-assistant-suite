@@ -88,6 +88,7 @@ public class OreTrackingTools(string baseUrl)
         }}
     ];
 
+    // Metodi sincroni per compatibilità (usano GetAwaiter().GetResult())
     public string Execute(string toolName, string argumentsJson)
     {
         try
@@ -97,15 +98,48 @@ public class OreTrackingTools(string baseUrl)
 
             return toolName switch
             {
-                "ore_list_clienti"     => Get("/api/time-tracking/clienti").GetAwaiter().GetResult(),
-                "ore_create_cliente"   => CreateCliente(args).GetAwaiter().GetResult(),
-                "ore_list_progetti"    => ListProgetti(args).GetAwaiter().GetResult(),
-                "ore_create_progetto"  => CreateProgetto(args).GetAwaiter().GetResult(),
-                "ore_list_ore"         => ListOre(args).GetAwaiter().GetResult(),
-                "ore_log_ora"          => LogOra(args).GetAwaiter().GetResult(),
-                "ore_totale_progetto"  => TotaleProgetto(args).GetAwaiter().GetResult(),
-                "ore_list_note"        => ListNote(args).GetAwaiter().GetResult(),
-                "ore_add_nota"         => AddNota(args).GetAwaiter().GetResult(),
+                "ore_list_clienti" => Get("/api/time-tracking/clienti").GetAwaiter().GetResult(),
+                "ore_create_cliente" => CreateCliente(args).GetAwaiter().GetResult(),
+                "ore_list_progetti" => ListProgetti(args).GetAwaiter().GetResult(),
+                "ore_create_progetto" => CreateProgetto(args).GetAwaiter().GetResult(),
+                "ore_list_ore" => ListOre(args).GetAwaiter().GetResult(),
+                "ore_log_ora" => LogOra(args).GetAwaiter().GetResult(),
+                "ore_totale_progetto" => TotaleProgetto(args).GetAwaiter().GetResult(),
+                "ore_list_note" => ListNote(args).GetAwaiter().GetResult(),
+                "ore_add_nota" => AddNota(args).GetAwaiter().GetResult(),
+                _ => $"Tool '{toolName}' non trovato."
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            return $"ERRORE: impossibile contattare il servizio ore-tracking ({_baseUrl}). " +
+                   $"È avviato? Dettagli: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"ERRORE: {ex.Message}";
+        }
+    }
+
+    // Metodi asincroni per uso con await
+    public async Task<string> ExecuteAsync(string toolName, string argumentsJson)
+    {
+        try
+        {
+            var args = JsonSerializer.Deserialize<JsonElement>(
+                string.IsNullOrWhiteSpace(argumentsJson) ? "{}" : argumentsJson);
+
+            return toolName switch
+            {
+                "ore_list_clienti" => await Get("/api/time-tracking/clienti"),
+                "ore_create_cliente" => await CreateCliente(args),
+                "ore_list_progetti" => await ListProgetti(args),
+                "ore_create_progetto" => await CreateProgetto(args),
+                "ore_list_ore" => await ListOre(args),
+                "ore_log_ora" => await LogOra(args),
+                "ore_totale_progetto" => await TotaleProgetto(args),
+                "ore_list_note" => await ListNote(args),
+                "ore_add_nota" => await AddNota(args),
                 _ => $"Tool '{toolName}' non trovato."
             };
         }

@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+using PmAssistant.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Microsoft.Extensions.Options;
-using PmAssistant.Services;
 
 namespace PmAssistant.Services;
 
@@ -33,7 +33,18 @@ public class TelegramBotService : ITelegramBotService
     public TelegramBotService(IOptions<TelegramSettings> settings, ILlmService llmService,
         IGoogleSheetsService sheetsService, IAssistantAgentService agent, ILogger<TelegramBotService> logger)
     {
-        _botClient = new TelegramBotClient(settings.Value.BotToken);
+        // Se il token è vuoto o "bot-token" (valore fittizio), non inizializzare il client
+        if (string.IsNullOrWhiteSpace(settings.Value.BotToken) ||
+
+            settings.Value.BotToken.Equals("bot-token", StringComparison.OrdinalIgnoreCase))
+        {
+            _botClient = null!;
+            _logger.LogWarning("Telegram bot token non configurato o fittizio. Il servizio Telegram sarà disabilitato.");
+        }
+        else
+        {
+            _botClient = new TelegramBotClient(settings.Value.BotToken);
+        }
         _llmService = llmService;
         _sheetsService = sheetsService;
         _agent = agent;
@@ -42,6 +53,12 @@ public class TelegramBotService : ITelegramBotService
 
     public async Task StartPollingAsync(CancellationToken cancellationToken = default)
     {
+        if (_botClient == null)
+        {
+            _logger.LogInformation("Telegram bot non inizializzato, polling disabilitato");
+            return;
+        }
+
         try
         {
             await _botClient.ReceiveAsync(
@@ -123,6 +140,12 @@ public class TelegramBotService : ITelegramBotService
 
     private async Task HandleSpecialCommandAsync(string chatId, string text, ITelegramBotClient botClient, CancellationToken ct)
     {
+        if (_botClient == null)
+        {
+            _logger.LogInformation("Telegram bot non inizializzato, comando disabilitato: {Command}", text);
+            return;
+        }
+
         var lower = text.ToLowerInvariant();
 
         if (lower == "/start")
@@ -523,6 +546,13 @@ public class TelegramBotService : ITelegramBotService
 
     public async Task SendMessageAsync(string chatId, string text, CancellationToken ct = default)
     {
-        await _botClient.SendMessage(chatId, text, cancellationToken: ct);
+        if (_botClient != null)
+        {
+            await _botClient.SendMessage(chatId, text, cancellationToken: ct);
+        }
+        else
+        {
+            _logger.LogInformation("[SIMULATO Telegram] Invio messaggio a {ChatId}: {Text}", chatId, text);
+        }
     }
 }

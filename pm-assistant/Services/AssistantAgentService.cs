@@ -166,7 +166,7 @@ public class AssistantAgentService : IAssistantAgentService
 
         // Aggiungi i tool custom dell'agente che NON sono in ToolDispatcher
         var existingNames = new HashSet<string>(allDefs.Select(t => t.Function.Name), StringComparer.OrdinalIgnoreCase);
-        
+
         foreach (var customTool in CustomTools())
         {
             if (!existingNames.Contains(customTool.Function.Name))
@@ -258,7 +258,7 @@ public class AssistantAgentService : IAssistantAgentService
             // I tool custom dell'agente hanno la loro logica di esecuzione
             var customTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "get_daily_logs", "get_todos", "stage_daily_logs", 
+                "get_daily_logs", "get_todos", "stage_daily_logs",
                 "add_todo", "list_guides", "read_guide"
             };
 
@@ -302,46 +302,105 @@ public class AssistantAgentService : IAssistantAgentService
 
     private async Task<string> GetDailyLogsAsync(int year, int month)
     {
-        var rows = await _sheets.ReadRowsAsync("DailyLogs");
-        var entries = new List<object>();
-        decimal total = 0;
-        var byProject = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        var byClient = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var row in rows.Skip(1))
+        // Usa OreTrackingTools per leggere le ore da ore-tracking/Api
+        try
         {
-            if (row.Count < 5 || !DateTime.TryParse(row[1]?.ToString(), out var date))
-                continue;
-            if (date.Year != year || date.Month != month)
-                continue;
+            // Prima estraggo i progetti per mappare gli ID
+            var projectsResult = await _toolDispatcher.ExecuteAsync("ore_list_progetti", "{}");
 
-            decimal.TryParse(row[4]?.ToString(), out var hours);
-            var client = row[2]?.ToString() ?? "";
-            var project = row.Count > 3 ? row[3]?.ToString() ?? "" : "";
+            // Poi estraggo le ore lavorate
+            var hoursResult = await _toolDispatcher.ExecuteAsync("ore_list_ore", "{}");
 
-            total += hours;
-            if (!string.IsNullOrWhiteSpace(project))
-                byProject[project] = byProject.GetValueOrDefault(project) + hours;
-            if (!string.IsNullOrWhiteSpace(client))
-                byClient[client] = byClient.GetValueOrDefault(client) + hours;
+            // Parse e riorganizza i dati (per ora fallback a Google Sheets se API non disponibile)
+            var entries = new List<object>();
+            decimal total = 0;
+            var byProject = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            var byClient = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
-            entries.Add(new
+            // TODO: Implementare parsing dei risultati da ore-tracking/Api
+            // Per ora fallback a Google Sheets (metodo legacy)
+            var rows = await _sheets.ReadRowsAsync("DailyLogs");
+
+            foreach (var row in rows.Skip(1))
             {
-                data = date.ToString("yyyy-MM-dd"),
-                cliente = client,
-                progetto = project,
-                ore = hours,
-                descrizione = row.Count > 5 ? row[5]?.ToString() ?? "" : ""
-            });
-        }
+                if (row.Count < 5 || !DateTime.TryParse(row[1]?.ToString(), out var date))
+                    continue;
+                if (date.Year != year || date.Month != month)
+                    continue;
 
-        return JsonSerializer.Serialize(new
+                decimal.TryParse(row[4]?.ToString(), out var hours);
+                var client = row[2]?.ToString() ?? "";
+                var project = row.Count > 3 ? row[3]?.ToString() ?? "" : "";
+
+                total += hours;
+                if (!string.IsNullOrWhiteSpace(project))
+                    byProject[project] = byProject.GetValueOrDefault(project) + hours;
+                if (!string.IsNullOrWhiteSpace(client))
+                    byClient[client] = byClient.GetValueOrDefault(client) + hours;
+
+                entries.Add(new
+                {
+                    data = date.ToString("yyyy-MM-dd"),
+                    cliente = client,
+                    progetto = project,
+                    ore = hours,
+                    descrizione = row.Count > 5 ? row[5]?.ToString() ?? "" : ""
+                });
+            }
+
+            return JsonSerializer.Serialize(new
+            {
+                voci = entries,
+                totale_ore = total,
+                totale_per_progetto = byProject,
+                totale_per_cliente = byClient
+            }, _jsonOut);
+        }
+        catch (Exception ex)
         {
-            voci = entries,
-            totale_ore = total,
-            totale_per_progetto = byProject,
-            totale_per_cliente = byClient
-        }, _jsonOut);
+            _logger.LogWarning(ex, "Errore lettura log ore da ore-tracking/Api, fallback a Google Sheets");
+            // Fallback a Google Sheets in caso di errore
+            var rows = await _sheets.ReadRowsAsync("DailyLogs");
+            var entries = new List<object>();
+            decimal total = 0;
+            var byProject = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            var byClient = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in rows.Skip(1))
+            {
+                if (row.Count < 5 || !DateTime.TryParse(row[1]?.ToString(), out var date))
+                    continue;
+                if (date.Year != year || date.Month != month)
+                    continue;
+
+                decimal.TryParse(row[4]?.ToString(), out var hours);
+                var client = row[2]?.ToString() ?? "";
+                var project = row.Count > 3 ? row[3]?.ToString() ?? "" : "";
+
+                total += hours;
+                if (!string.IsNullOrWhiteSpace(project))
+                    byProject[project] = byProject.GetValueOrDefault(project) + hours;
+                if (!string.IsNullOrWhiteSpace(client))
+                    byClient[client] = byClient.GetValueOrDefault(client) + hours;
+
+                entries.Add(new
+                {
+                    data = date.ToString("yyyy-MM-dd"),
+                    cliente = client,
+                    progetto = project,
+                    ore = hours,
+                    descrizione = row.Count > 5 ? row[5]?.ToString() ?? "" : ""
+                });
+            }
+
+            return JsonSerializer.Serialize(new
+            {
+                voci = entries,
+                totale_ore = total,
+                totale_per_progetto = byProject,
+                totale_per_cliente = byClient
+            }, _jsonOut);
+        }
     }
 
     private async Task<string> GetTodosAsync()
