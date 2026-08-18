@@ -78,6 +78,36 @@ builder.Services.AddHostedService<SchedulerHostedService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// ── Authentication & CORS ───────────────────────────────────────────────────────
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "JwtBearer";
+    options.DefaultChallengeScheme = "JwtBearer";
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+            System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "DefaultSuperSecretKey123!"))
+    };
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendCors", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5000")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // ── Telegram Bot Startup ──────────────────────────────────────────────────────
@@ -114,6 +144,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseCors("FrontendCors");
 
 app.UseHttpsRedirection();
 app.MapControllers();

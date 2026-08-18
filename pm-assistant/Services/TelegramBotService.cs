@@ -33,6 +33,8 @@ public class TelegramBotService : ITelegramBotService
     public TelegramBotService(IOptions<TelegramSettings> settings, ILlmService llmService,
         IGoogleSheetsService sheetsService, IAssistantAgentService agent, ILogger<TelegramBotService> logger)
     {
+        _logger = logger;
+
         // Se il token è vuoto o "bot-token" (valore fittizio), non inizializzare il client
         if (string.IsNullOrWhiteSpace(settings.Value.BotToken) ||
 
@@ -48,7 +50,6 @@ public class TelegramBotService : ITelegramBotService
         _llmService = llmService;
         _sheetsService = sheetsService;
         _agent = agent;
-        _logger = logger;
     }
 
     public async Task StartPollingAsync(CancellationToken cancellationToken = default)

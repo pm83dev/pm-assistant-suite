@@ -46,6 +46,9 @@
 
     <!-- Hosting -->
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+
+    <!-- Authentication -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.28" />
   </ItemGroup>
 
   <ItemGroup>

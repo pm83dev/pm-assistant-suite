@@ -46,7 +46,7 @@ Nella cartella ci sono **due progetti distinti**, non uno solo con leftover:
 Un unico processo `pm-assistant` (ASP.NET host) che espone **un solo punto di ingresso "agente"** (nuovo endpoint di chat con tool-calling, riusato sia da Telegram sia da console/API), con un set di tool ampio:
 
 ```
-Utente (Telegram / console CLI / eventuale UI web)
+Utente (Telegram / console CLI / UI web)
         │
         ▼
  AssistantAgentService (nuovo: usa ToolDispatcher, non solo LlamaClient)

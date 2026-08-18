@@ -1,6 +1,7 @@
 @echo off
-cd /d "%~dp0..\Web"
+pushd "%~dp0..\frontend"
 if not exist node_modules (
-  npm install
+  call npm install
 )
-npx ng build --configuration production
+call npx ng build --configuration production
+popd
