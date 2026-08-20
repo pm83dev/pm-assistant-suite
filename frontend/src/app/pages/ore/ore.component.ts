@@ -28,7 +28,7 @@ interface MonthDay {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './ore.component.html',
-  styleUrls: ['./ore.component.css']
+  styleUrls: ['./ore.component.css'],
 })
 export class OreComponent implements OnInit {
   oreLavorate: OraLavorata[] = [];
@@ -80,13 +80,29 @@ export class OreComponent implements OnInit {
     if (this.calendarView.length > 0) {
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-      const idx = this.calendarView.findIndex(m => `${m.year}-${String(this.getMonthNumber(m.month) + 1).padStart(2, '0')}` === todayKey);
+      const idx = this.calendarView.findIndex(
+        (m) =>
+          `${m.year}-${String(this.getMonthNumber(m.month) + 1).padStart(2, '0')}` === todayKey,
+      );
       this.currentMonthIndex = idx >= 0 ? idx : this.calendarView.length - 1;
     }
   }
 
   private getMonthNumber(monthName: string): number {
-    const months = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+    const months = [
+      'Gennaio',
+      'Febbraio',
+      'Marzo',
+      'Aprile',
+      'Maggio',
+      'Giugno',
+      'Luglio',
+      'Agosto',
+      'Settembre',
+      'Ottobre',
+      'Novembre',
+      'Dicembre',
+    ];
     return months.indexOf(monthName);
   }
 
@@ -176,8 +192,18 @@ export class OreComponent implements OnInit {
 
     // Genera tutti i mesi nel range
     const monthNames = [
-      'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-      'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+      'Gennaio',
+      'Febbraio',
+      'Marzo',
+      'Aprile',
+      'Maggio',
+      'Giugno',
+      'Luglio',
+      'Agosto',
+      'Settembre',
+      'Ottobre',
+      'Novembre',
+      'Dicembre',
     ];
 
     let year = minYear;
@@ -224,7 +250,9 @@ export class OreComponent implements OnInit {
 
     // Posiziona la vista sul mese corrente
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    const idx = this.calendarView.findIndex(m => `${m.year}-${String(this.getMonthNumber(m.month) + 1).padStart(2, '0')}` === todayKey);
+    const idx = this.calendarView.findIndex(
+      (m) => `${m.year}-${String(this.getMonthNumber(m.month) + 1).padStart(2, '0')}` === todayKey,
+    );
     this.currentMonthIndex = idx >= 0 ? idx : this.calendarView.length - 1;
   }
 
@@ -378,7 +406,7 @@ export class OreComponent implements OnInit {
     if (!month) return 0;
     const monthIndex = this.getMonthNumber(month.month);
     return this.oreLavorate
-      .filter(o => {
+      .filter((o) => {
         const d = new Date(o.data);
         return d.getFullYear() === month.year && d.getMonth() === monthIndex;
       })
@@ -390,8 +418,8 @@ export class OreComponent implements OnInit {
     if (!month) return 0;
     const monthIndex = this.getMonthNumber(month.month);
     return this.oreLavorate
-      .filter(o => o.progettoId === projectId)
-      .filter(o => {
+      .filter((o) => o.progettoId === projectId)
+      .filter((o) => {
         const d = new Date(o.data);
         return d.getFullYear() === month.year && d.getMonth() === monthIndex;
       })
@@ -429,7 +457,7 @@ export class OreComponent implements OnInit {
     const doc = new jsPDF();
 
     doc.setFontSize(16);
-    doc.text('Report Ore Lavorate', 14, 18);
+    doc.text('Riepilogo attività mese', 14, 18);
     doc.setFontSize(11);
     doc.text(`Cliente: ${cliente.nome}`, 14, 27);
     doc.text(`Periodo: ${month.month} ${month.year}`, 14, 33);
@@ -453,7 +481,8 @@ export class OreComponent implements OnInit {
       totaliPerProgetto.set(o.progettoId, (totaliPerProgetto.get(o.progettoId) || 0) + o.ore);
     }
 
-    const afterTableY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    const afterTableY =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.text('Totale Ore per Progetto', 14, afterTableY);
 
@@ -468,7 +497,8 @@ export class OreComponent implements OnInit {
       headStyles: { fillColor: [13, 110, 253] },
     });
 
-    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    const finalY =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.text(`Totale Ore: ${totaleOre.toFixed(1)}h`, 14, finalY);
     doc.text(`Totale Importo: ${totaleImporto.toFixed(2)}€`, 14, finalY + 7);
