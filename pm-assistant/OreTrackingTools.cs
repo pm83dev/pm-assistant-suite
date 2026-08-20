@@ -7,7 +7,7 @@ namespace PmAssistant.Tools;
 /// <summary>
 /// Tool per interagire con il servizio ore-tracking/Api (Clienti, Progetti, Ore lavorate, Note)
 /// tramite le sue API REST. Il servizio resta un processo .NET separato: questi tool si limitano
-/// a chiamarlo via HTTP, esattamente come fa il frontend Angular in ore-tracking/Web.
+/// a chiamarlo via HTTP, esattamente come fa il frontend Angular in frontend/.
 /// </summary>
 public class OreTrackingTools(string baseUrl)
 {

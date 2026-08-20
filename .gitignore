@@ -60,6 +60,7 @@ pm-assistant/appsettings.json
 # Publish/build output
 dist/
 publish/
+ore-tracking/Api/wwwroot/
 
 # Node / Angular
 node_modules/

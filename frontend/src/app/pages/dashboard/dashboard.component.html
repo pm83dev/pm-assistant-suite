@@ -27,8 +27,12 @@
   <div class="col-md-3 col-6 mb-3">
     <div class="card shadow-sm border-info">
       <div class="card-body text-center">
-        <h3 class="text-info mb-0">{{ oreUltimoMese.toFixed(1) }}</h3>
-        <small class="text-muted">Ore Ultimo Mese</small>
+        <div class="d-flex justify-content-center align-items-center gap-2 mb-1">
+          <button class="btn btn-sm btn-outline-info" (click)="cambiaMese(-1)">&#9664;</button>
+          <h3 class="text-info mb-0" style="min-width: 120px;">{{ oreUltimoMese.toFixed(1) }}</h3>
+          <button class="btn btn-sm btn-outline-info" (click)="cambiaMese(1)">&#9654;</button>
+        </div>
+        <small class="text-muted">Ore {{ meseCorrente }}</small>
       </div>
     </div>
   </div>

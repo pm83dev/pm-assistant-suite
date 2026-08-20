@@ -1,8 +1,12 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using OreTracking.Api.Controllers;
 using OreTracking.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<AdminUserSettings>(builder.Configuration.GetSection("AdminUser"));
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -14,8 +18,8 @@ builder.Services.AddControllers()
 // Add Authentication with JWT
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = "JwtBearer";
-    options.DefaultChallengeScheme = "JwtBearer";
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {

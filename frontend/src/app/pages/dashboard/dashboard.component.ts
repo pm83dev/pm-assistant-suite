@@ -16,10 +16,17 @@ export class DashboardComponent implements OnInit {
   totalProgetti: number = 0;
   totalOre: number = 0;
   oreUltimoMese: number = 0;
+  meseCorrente: string = '';
+  dataRiferimento: Date = new Date();
 
   private timeService = inject(TimeTrackingService);
 
   ngOnInit() {
+    this.loadStats();
+  }
+
+  cambiaMese(delta: number): void {
+    this.dataRiferimento.setMonth(this.dataRiferimento.getMonth() + delta);
     this.loadStats();
   }
 
@@ -37,9 +44,14 @@ export class DashboardComponent implements OnInit {
         this.totalOre = o.reduce((s, x) => s + x.ore, 0);
       },
     });
-    const da = new Date();
-    da.setMonth(da.getMonth() - 1);
-    this.timeService.getOreByRange(da, new Date()).subscribe({
+
+    const anno = this.dataRiferimento.getFullYear();
+    const mese = this.dataRiferimento.getMonth();
+    const da = new Date(anno, mese, 1);
+    const a = new Date(anno, mese + 1, 0, 23, 59, 59);
+    this.meseCorrente = da.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+
+    this.timeService.getOreByRange(da, a).subscribe({
       next: (o: OraLavorata[]) => {
         this.oreUltimoMese = o.reduce((s, x) => s + x.ore, 0);
       },

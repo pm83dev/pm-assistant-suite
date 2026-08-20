@@ -1,9 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Cliente, OraLavorata, Progetto } from '../../models';
 import { TimeTrackingService } from '../../time-tracking.service';
 import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../utils/badge-color';
+
+const TARIFFA_ORARIA = 31.25;
 
 interface MonthView {
   month: string;
@@ -24,7 +28,7 @@ interface MonthDay {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './ore.component.html',
-  styleUrls: ['./ore.component.css'],
+  styleUrls: ['./ore.component.css']
 })
 export class OreComponent implements OnInit {
   oreLavorate: OraLavorata[] = [];
@@ -42,10 +46,53 @@ export class OreComponent implements OnInit {
   };
 
   calendarView: MonthView[] = [];
+  currentMonthIndex: number = 0;
+  animationDirection: 'prev' | 'next' = 'next';
   selectedDayEntries: OraLavorata[] = [];
   selectedDayDate: string = '';
+  selectedClienteId = 0;
 
   constructor(private service: TimeTrackingService) {}
+
+  get visibleMonth(): MonthView | undefined {
+    return this.calendarView[this.currentMonthIndex];
+  }
+
+  getAnimationDirection(): 'prev' | 'next' {
+    return this.animationDirection;
+  }
+
+  prevMonth(): void {
+    if (this.currentMonthIndex > 0) {
+      this.animationDirection = 'prev';
+      this.currentMonthIndex--;
+    }
+  }
+
+  nextMonth(): void {
+    if (this.currentMonthIndex < this.calendarView.length - 1) {
+      this.animationDirection = 'next';
+      this.currentMonthIndex++;
+    }
+  }
+
+  goToCurrentMonth(): void {
+    if (this.calendarView.length > 0) {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      const idx = this.calendarView.findIndex(m => `${m.year}-${String(this.getMonthNumber(m.month) + 1).padStart(2, '0')}` === todayKey);
+      this.currentMonthIndex = idx >= 0 ? idx : this.calendarView.length - 1;
+    }
+  }
+
+  private getMonthNumber(monthName: string): number {
+    const months = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+    return months.indexOf(monthName);
+  }
+
+  private formatDateForInput(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
 
   ngOnInit(): void {
     this.loadClienti();
@@ -99,27 +146,44 @@ export class OreComponent implements OnInit {
     }
 
     this.calendarView = [];
-    const sortedKeys = Array.from(monthMap.keys()).sort();
 
-    for (const key of sortedKeys) {
-      const [yearStr, monthStr] = key.split('-');
-      const year = parseInt(yearStr);
-      const month = parseInt(monthStr) - 1;
-      const monthNames = [
-        'Gennaio',
-        'Febbraio',
-        'Marzo',
-        'Aprile',
-        'Maggio',
-        'Giugno',
-        'Luglio',
-        'Agosto',
-        'Settembre',
-        'Ottobre',
-        'Novembre',
-        'Dicembre',
-      ];
+    // Aggiungi il mese corrente se non è già presente
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthMap.has(currentMonthKey)) {
+      monthMap.set(currentMonthKey, []);
+    }
 
+    // Determina il range di mesi: da 24 mesi prima di oggi a 24 mesi dopo
+    let minYear = today.getFullYear();
+    let minMonth = today.getMonth();
+    for (let i = 0; i < 24; i++) {
+      minMonth--;
+      if (minMonth < 0) {
+        minMonth = 11;
+        minYear--;
+      }
+    }
+    let maxYear = today.getFullYear();
+    let maxMonth = today.getMonth();
+    for (let i = 0; i < 24; i++) {
+      maxMonth++;
+      if (maxMonth >= 12) {
+        maxMonth = 0;
+        maxYear++;
+      }
+    }
+
+    // Genera tutti i mesi nel range
+    const monthNames = [
+      'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+      'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+    ];
+
+    let year = minYear;
+    let month = minMonth;
+
+    while (year < maxYear || (year === maxYear && month <= maxMonth)) {
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDay = new Date(year, month, 1).getDay();
       const startOffset = firstDay === 0 ? 6 : firstDay - 1;
@@ -149,7 +213,19 @@ export class OreComponent implements OnInit {
         year,
         days: monthDays,
       });
+
+      // Avanza al mese successivo
+      month++;
+      if (month >= 12) {
+        month = 0;
+        year++;
+      }
     }
+
+    // Posiziona la vista sul mese corrente
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const idx = this.calendarView.findIndex(m => `${m.year}-${String(this.getMonthNumber(m.month) + 1).padStart(2, '0')}` === todayKey);
+    this.currentMonthIndex = idx >= 0 ? idx : this.calendarView.length - 1;
   }
 
   isToday(date: Date): boolean {
@@ -165,6 +241,11 @@ export class OreComponent implements OnInit {
       month: 'long',
       day: 'numeric',
     });
+  }
+
+  closeDayDetails(): void {
+    this.selectedDayEntries = [];
+    this.selectedDayDate = '';
   }
 
   getDayTooltip(day: MonthDay): string {
@@ -189,7 +270,24 @@ export class OreComponent implements OnInit {
   openNewForm(): void {
     this.editMode = false;
     this.form = {
-      data: new Date().toISOString().split('T')[0],
+      data: this.formatDateForInput(new Date()),
+      ore: 1,
+      descrizione: '',
+      progettoId: this.progetti[0]?.id || 0,
+    };
+    this.showForm = true;
+  }
+
+  openFormForDay(day: MonthDay): void {
+    if (day.day === 0) return;
+
+    if (day.hasEntries) {
+      this.showDayDetails(day.entries || [], day.date);
+    }
+
+    this.editMode = false;
+    this.form = {
+      data: this.formatDateForInput(day.date),
       ore: 1,
       descrizione: '',
       progettoId: this.progetti[0]?.id || 0,
@@ -212,13 +310,13 @@ export class OreComponent implements OnInit {
   save(): void {
     if (this.form.progettoId === 0 || this.form.ore <= 0) return;
 
-    const dataOra = new Date(this.form.data);
-    dataOra.setHours(0, 0, 0, 0);
+    // Usa la stringa YYYY-MM-DD direttamente per evitare shift di fuso orario
+    const dataStr = this.form.data;
 
     if (this.editMode && this.selectedOra) {
       const updated: OraLavorata = {
         ...this.selectedOra,
-        data: dataOra.toISOString(),
+        data: dataStr,
         ore: this.form.ore,
         descrizione: this.form.descrizione || undefined,
         progettoId: this.form.progettoId,
@@ -232,7 +330,7 @@ export class OreComponent implements OnInit {
     } else {
       this.service
         .addOraLavorata({
-          data: dataOra.toISOString(),
+          data: dataStr,
           ore: this.form.ore,
           descrizione: this.form.descrizione || undefined,
           progettoId: this.form.progettoId,
@@ -276,7 +374,107 @@ export class OreComponent implements OnInit {
   }
 
   getTotalOre(): number {
-    return this.oreLavorate.reduce((sum, o) => sum + o.ore, 0);
+    const month = this.visibleMonth;
+    if (!month) return 0;
+    const monthIndex = this.getMonthNumber(month.month);
+    return this.oreLavorate
+      .filter(o => {
+        const d = new Date(o.data);
+        return d.getFullYear() === month.year && d.getMonth() === monthIndex;
+      })
+      .reduce((sum, o) => sum + o.ore, 0);
+  }
+
+  getTotalOrePerProject(projectId: number): number {
+    const month = this.visibleMonth;
+    if (!month) return 0;
+    const monthIndex = this.getMonthNumber(month.month);
+    return this.oreLavorate
+      .filter(o => o.progettoId === projectId)
+      .filter(o => {
+        const d = new Date(o.data);
+        return d.getFullYear() === month.year && d.getMonth() === monthIndex;
+      })
+      .reduce((sum, o) => sum + o.ore, 0);
+  }
+
+  exportPdf(): void {
+    const month = this.visibleMonth;
+    if (!month || this.selectedClienteId === 0) return;
+
+    const cliente = this.clienti.find((c) => c.id === this.selectedClienteId);
+    if (!cliente) return;
+
+    const monthIndex = this.getMonthNumber(month.month);
+    const progettiIds = new Set(
+      this.progetti.filter((p) => p.clienteId === this.selectedClienteId).map((p) => p.id),
+    );
+
+    const entries = this.oreLavorate
+      .filter((o) => progettiIds.has(o.progettoId))
+      .filter((o) => {
+        const d = new Date(o.data);
+        return d.getFullYear() === month.year && d.getMonth() === monthIndex;
+      })
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+
+    if (entries.length === 0) {
+      alert('Nessuna ora registrata per questo cliente nel mese selezionato.');
+      return;
+    }
+
+    const totaleOre = entries.reduce((sum, o) => sum + o.ore, 0);
+    const totaleImporto = totaleOre * TARIFFA_ORARIA;
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text('Report Ore Lavorate', 14, 18);
+    doc.setFontSize(11);
+    doc.text(`Cliente: ${cliente.nome}`, 14, 27);
+    doc.text(`Periodo: ${month.month} ${month.year}`, 14, 33);
+    doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 14, 39);
+
+    autoTable(doc, {
+      startY: 45,
+      head: [['Data', 'Progetto', 'Attività', 'Ore']],
+      body: entries.map((o) => [
+        this.formatDate(o.data),
+        this.getProgettoNome(o.progettoId),
+        o.descrizione || '-',
+        o.ore.toFixed(1),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [13, 110, 253] },
+    });
+
+    const totaliPerProgetto = new Map<number, number>();
+    for (const o of entries) {
+      totaliPerProgetto.set(o.progettoId, (totaliPerProgetto.get(o.progettoId) || 0) + o.ore);
+    }
+
+    const afterTableY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text('Totale Ore per Progetto', 14, afterTableY);
+
+    autoTable(doc, {
+      startY: afterTableY + 4,
+      head: [['Progetto', 'Ore']],
+      body: Array.from(totaliPerProgetto.entries()).map(([progettoId, ore]) => [
+        this.getProgettoNome(progettoId),
+        ore.toFixed(1),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [13, 110, 253] },
+    });
+
+    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text(`Totale Ore: ${totaleOre.toFixed(1)}h`, 14, finalY);
+    doc.text(`Totale Importo: ${totaleImporto.toFixed(2)}€`, 14, finalY + 7);
+
+    const fileName = `Report_${cliente.nome.replace(/\s+/g, '_')}_${month.month}_${month.year}.pdf`;
+    doc.save(fileName);
   }
 
   // Wrapper per le funzioni di colore

@@ -1,91 +1,201 @@
 <div class="container">
-  <div class="header">
-    <h2>Ore Lavorate</h2>
-    <button class="btn btn-primary" (click)="openNewForm()">+ Nuova Registrazione</button>
+  <div class="row align-items-center header">
+    <div class="col">
+      <h2>Ore Lavorate</h2>
+    </div>
+    <div class="col-auto export-bar">
+      <select [(ngModel)]="selectedClienteId" name="exportCliente" class="cliente-select" title="Cliente per il report">
+        <option [ngValue]="0">-- Cliente --</option>
+        <option *ngFor="let c of clienti" [ngValue]="c.id">{{ c.nome }}</option>
+      </select>
+      <button
+        class="btn btn-outline-pdf"
+        [disabled]="selectedClienteId === 0"
+        (click)="exportPdf()"
+        title="Esporta report PDF del mese visualizzato per il cliente selezionato"
+      >
+        Esporta PDF
+      </button>
+      <button class="btn btn-primary" (click)="openNewForm()">+ Nuova Registrazione</button>
+    </div>
   </div>
 
   <!-- Form -->
-  <div class="form-container" *ngIf="showForm">
-    <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
-    <form (ngSubmit)="save()">
-      <div class="form-group">
-        <label>Progetto *</label>
-        <select [(ngModel)]="form.progettoId" name="progettoId" required>
-          <option value="0">-- Seleziona Progetto --</option>
-          <option *ngFor="let p of progetti" [value]="p.id">{{ p.nome }}</option>
-        </select>
+  <div class="form-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="form-container" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
+        <button type="button" class="form-close" (click)="closeForm()" aria-label="Chiudi">&times;</button>
       </div>
-      <div class="form-group">
-        <label>Data *</label>
-        <input type="date" [(ngModel)]="form.data" name="data" required />
-      </div>
-      <div class="form-group">
-        <label>Ore *</label>
-        <input type="number" [(ngModel)]="form.ore" name="ore" min="0.25" step="0.25" required placeholder="Es: 2.5" />
-      </div>
-      <div class="form-group">
-        <label>Descrizione</label>
-        <textarea [(ngModel)]="form.descrizione" name="descrizione" rows="3" placeholder="Cosa hai fatto?"></textarea>
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-success">Salva</button>
-        <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
-      </div>
-    </form>
+      <form (ngSubmit)="save()">
+        <div class="form-group">
+          <label>Progetto *</label>
+          <select [(ngModel)]="form.progettoId" name="progettoId" required>
+            <option value="0">-- Seleziona Progetto --</option>
+            <option *ngFor="let p of progetti" [value]="p.id">{{ p.nome }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data *</label>
+          <input type="date" [(ngModel)]="form.data" name="data" required />
+        </div>
+        <div class="form-group">
+          <label>Ore *</label>
+          <input
+            type="number"
+            [(ngModel)]="form.ore"
+            name="ore"
+            min="0.25"
+            step="0.25"
+            required
+            placeholder="Es: 2.5"
+          />
+        </div>
+        <div class="form-group">
+          <label>Descrizione</label>
+          <textarea
+            [(ngModel)]="form.descrizione"
+            name="descrizione"
+            rows="3"
+            placeholder="Cosa hai fatto?"
+          ></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success">Salva</button>
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Riepilogo -->
   <div class="summary">
-    <strong>Totale Ore:</strong> {{ getTotalOre().toFixed(1) }}h
+    <div class="summary-total">
+      <strong>Totale Ore:</strong> {{ getTotalOre().toFixed(1) }}h
+      <strong class="ms-5">Totale Importo:</strong> {{ getTotalOre() * 31.25 }}€
+    </div>
+    <div class="summary-breakdown" *ngIf="progetti.length > 0">
+      <strong>Totale Ore per progetto:</strong>
+      <ul>
+        <ng-container *ngFor="let project of progetti">
+          <li *ngIf="getTotalOrePerProject(project.id) > 0">
+            {{ project.nome }}: {{ getTotalOrePerProject(project.id).toFixed(1) }}h
+          </li>
+        </ng-container>
+      </ul>
+    </div>
   </div>
 
-  <!-- Calendario Ore -->
+  <!-- Calendario Ore - Carosello Mesi -->
   <div class="calendar-container" *ngIf="calendarView.length > 0">
-    <div class="month-view" *ngFor="let month of calendarView">
-      <h3 class="month-title">{{ month.month }} {{ month.year }}</h3>
-      <div class="calendar-grid">
-        <div class="day-header">Lun</div>
-        <div class="day-header">Mar</div>
-        <div class="day-header">Mer</div>
-        <div class="day-header">Gio</div>
-        <div class="day-header">Ven</div>
-        <div class="day-header">Sab</div>
-        <div class="day-header">Dom</div>
+    <div class="card calendar-card">
+      <div class="card-body p-0">
+        <div class="carousel-wrapper">
+          <button
+            class="btn-nav"
+            (click)="prevMonth()"
+            [disabled]="currentMonthIndex === 0"
+            title="Mese precedente"
+          >
+            &#9664;
+          </button>
 
-        <!-- Celle dei giorni -->
-        <div class="day-cell" *ngFor="let day of month.days"
-             [class.empty]="day.day === 0"
-             [class.today]="isToday(day.date)"
-             [class.has-entries]="day.hasEntries"
-             (click)="day.hasEntries ? showDayDetails(day.entries || [], day.date) : null"
-             [attr.title]="getDayTooltip(day)">
-          <span class="day-number">{{ day.day }}</span>
-          <span class="day-ore" *ngIf="day.ore > 0">
-            {{ day.ore.toFixed(1) }}h
-          </span>
+          <div class="month-view-carousel">
+            <div class="month-view" *ngIf="visibleMonth">
+              <h3 class="month-title">{{ visibleMonth.month }} {{ visibleMonth.year }}</h3>
+              <div class="calendar-grid">
+                <div class="day-header">Lun</div>
+                <div class="day-header">Mar</div>
+                <div class="day-header">Mer</div>
+                <div class="day-header">Gio</div>
+                <div class="day-header">Ven</div>
+                <div class="day-header">Sab</div>
+                <div class="day-header">Dom</div>
+
+                <!-- Celle dei giorni -->
+                <div
+                  class="day-cell"
+                  *ngFor="let day of visibleMonth.days"
+                  [class.empty]="day.day === 0"
+                  [class.today]="isToday(day.date)"
+                  [class.has-entries]="day.hasEntries"
+                  (click)="openFormForDay(day)"
+                  [attr.title]="getDayTooltip(day)"
+                >
+                  <span class="day-number">{{ day.day }}</span>
+                  <span class="day-ore" *ngIf="day.ore > 0"> {{ day.ore.toFixed(1) }}h </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="btn-nav"
+            (click)="nextMonth()"
+            [disabled]="currentMonthIndex >= calendarView.length - 1"
+            title="Mese successivo"
+          >
+            &#9654;
+          </button>
+        </div>
+
+        <div class="empty" *ngIf="oreLavorate.length === 0">
+          Nessuna registrazione presente. Aggiungi la tua prima ora lavorata!
         </div>
       </div>
     </div>
 
-    <div class="empty" *ngIf="oreLavorate.length === 0">
-      Nessuna registrazione presente. Aggiungi la tua prima ora lavorata!
+    <!-- Indicatori Carosello -->
+    <div class="month-carousel-indicators" *ngIf="calendarView.length > 1">
+      <span
+        *ngFor="let month of calendarView; let i = index"
+        class="month-indicator"
+        [class.active]="i === currentMonthIndex"
+        (click)="currentMonthIndex = i"
+        [title]="month.month + ' ' + month.year"
+      >
+      </span>
     </div>
   </div>
 
   <!-- Dettagli giorno -->
   <div class="day-details" *ngIf="selectedDayEntries.length > 0">
-    <h3>{{ selectedDayDate }}</h3>
-    <div class="day-entries">
-      <div class="card" *ngFor="let o of selectedDayEntries">
-        <div class="card-header">
-          <div>
-            <span class="badge" [style.background]="getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))" [style.color]="'#e8f0fe'" [style.border]="'1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))">{{ getClienteNomeDaProgetto(o.progettoId) }}</span>
-            <span class="badge" [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))" [style.color]="'#e8f5e9'" [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))">{{ getProgettoNome(o.progettoId) }}</span>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">{{ selectedDayDate }}</h3>
+      <button class="btn btn-sm btn-secondary" (click)="closeDayDetails()">Chiudi</button>
+    </div>
+    <hr />
+    <div class="row day-entries">
+      <div class="col-12" *ngFor="let o of selectedDayEntries">
+        <div class="card">
+          <div class="card-header">
+            <div class="badges">
+              <span
+                class="badge"
+                [style.background]="getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))"
+                [style.color]="'#e8f0fe'"
+                [style.border]="
+                  '1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))
+                "
+                >{{ getClienteNomeDaProgetto(o.progettoId) }}</span
+              >
+              <span
+                class="badge"
+                [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))"
+                [style.color]="'#e8f5e9'"
+                [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))"
+                >{{ getProgettoNome(o.progettoId) }}</span
+              >
+            </div>
+            <div class="ore-amount">{{ o.ore }}h</div>
           </div>
-          <div class="ore-amount">{{ o.ore }}h</div>
-        </div>
-        <div class="card-body">
-          <p *ngIf="o.descrizione"><strong>Dettaglio:</strong> {{ o.descrizione }}</p>
+          <div class="card-body">
+            <p *ngIf="o.descrizione"><strong>Dettaglio:</strong> {{ o.descrizione }}</p>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-sm btn-edit" (click)="openEditForm(o)">Modifica</button>
+            <button class="btn btn-sm btn-delete" (click)="delete(o.id)">Elimina</button>
+          </div>
         </div>
       </div>
     </div>

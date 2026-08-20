@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OreTracking.Api.Models;
 using OreTracking.Api.Services;
@@ -6,6 +7,7 @@ namespace OreTracking.Api.Controllers;
 
 [ApiController]
 [Route("api/time-tracking")]
+[Authorize]
 public class TimeTrackingController : ControllerBase
 {
     private readonly IDataRepository _repository;
@@ -135,7 +137,6 @@ public class TimeTrackingController : ControllerBase
     [HttpPost("ore")]
     public async Task<ActionResult<OraLavorata>> CreateOraLavorata(OraLavorata ora)
     {
-        ora.Data = DateTime.Now.Date;
         var created = await _repository.AddOraLavorataAsync(ora);
         return CreatedAtAction(nameof(GetOreByProgetto), new { progettoId = created.ProgettoId }, created);
     }
