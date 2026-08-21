@@ -45,8 +45,8 @@ public class DataService : IDataRepository
     public async Task<IEnumerable<OraLavorata>> GetOreByProgettoAsync(int progettoId) => await _context.OreLavorate.Where(o => o.ProgettoId == progettoId).ToListAsync();
     public IEnumerable<OraLavorata> GetOreByDataRange(DateTime da, DateTime a) => _context.OreLavorate.Where(o => o.Data >= da && o.Data <= a);
     public async Task<IEnumerable<OraLavorata>> GetOreByDataRangeAsync(DateTime da, DateTime a) => await _context.OreLavorate.Where(o => o.Data >= da && o.Data <= a).ToListAsync();
-    public decimal GetTotalOreByProgetto(int progettoId) => _context.OreLavorate.Where(o => o.ProgettoId == progettoId).Sum(o => (decimal)o.Ore);
-    public async Task<decimal> GetTotalOreByProgettoAsync(int progettoId) => await _context.OreLavorate.Where(o => o.ProgettoId == progettoId).SumAsync(o => (decimal)o.Ore);
+    public decimal GetTotalOreByProgetto(int progettoId) => _context.OreLavorate.Where(o => o.ProgettoId == progettoId).ToList().Sum(o => (decimal)o.Ore);
+    public async Task<decimal> GetTotalOreByProgettoAsync(int progettoId) => (await _context.OreLavorate.Where(o => o.ProgettoId == progettoId).ToListAsync()).Sum(o => (decimal)o.Ore);
     public OraLavorata AddOraLavorata(OraLavorata ora) { _context.OreLavorate.Add(ora); return ora; }
     public async Task<OraLavorata> AddOraLavorataAsync(OraLavorata ora) { _context.OreLavorate.Add(ora); await SaveChangesAsync(); return ora; }
     public void UpdateOraLavorata(OraLavorata ora) => _context.OreLavorate.Update(ora);

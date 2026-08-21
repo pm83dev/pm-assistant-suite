@@ -58,6 +58,15 @@ public class OraLavorata
     public Progetto? Progetto { get; set; }
 }
 
+public class RiepilogoProgettiOre
+{
+    public int ProgettoId { get; set; }
+    public string ProgettoNome { get; set; }
+    public int ClienteId { get; set; }
+    public string ClienteNome { get; set; }
+    public decimal TotaleOre { get; set; }
+}
+
 public class Nota
 {
     public int Id { get; set; }

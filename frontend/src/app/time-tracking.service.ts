@@ -58,6 +58,9 @@ export class TimeTrackingService {
   getTotalOreByProgetto(progettoId: number) {
     return this.http.get<TotaleOre>(`${this.baseUrl}/ore/progetto/${progettoId}/total`);
   }
+  getRiepilogoProgetti() {
+    return this.http.get<any[]>(`${this.baseUrl}/ore/riepilogo-progetti`);
+  }
   addOraLavorata(ora: Omit<OraLavorata, 'id'>) {
     return this.http.post<OraLavorata>(`${this.baseUrl}/ore`, ora);
   }

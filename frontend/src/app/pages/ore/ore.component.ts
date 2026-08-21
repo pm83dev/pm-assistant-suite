@@ -457,14 +457,15 @@ export class OreComponent implements OnInit {
     const doc = new jsPDF();
 
     doc.setFontSize(16);
-    doc.text('Riepilogo attività mese', 14, 18);
+    doc.text('Report attività', 14, 18);
     doc.setFontSize(11);
     doc.text(`Cliente: ${cliente.nome}`, 14, 27);
     doc.text(`Periodo: ${month.month} ${month.year}`, 14, 33);
-    doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 14, 39);
+    doc.text(`Fornitore: PM Software & Automation di Miccoli Paolo`, 14, 39);
+    doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 14, 45);
 
     autoTable(doc, {
-      startY: 45,
+      startY: 51,
       head: [['Data', 'Progetto', 'Attività', 'Ore']],
       body: entries.map((o) => [
         this.formatDate(o.data),

@@ -134,6 +134,32 @@ public class TimeTrackingController : ControllerBase
         return Ok(new { ProgettoId = progettoId, TotalOre = total });
     }
 
+    [HttpGet("ore/riepilogo-progetti")]
+    public async Task<ActionResult<IEnumerable<RiepilogoProgettiOre>>> GetRiepilogoProgetti()
+    {
+        var progetti = await _repository.GetAllProgettiAsync();
+        var clienti = await _repository.GetAllClientiAsync();
+        var clienteMap = clienti.ToDictionary(c => c.Id, c => c.Nome);
+
+        var riepilogo = new List<RiepilogoProgettiOre>();
+
+        foreach (var p in progetti)
+        {
+            var totale = await _repository.GetTotalOreByProgettoAsync(p.Id);
+
+            riepilogo.Add(new RiepilogoProgettiOre
+            {
+                ProgettoId = p.Id,
+                ProgettoNome = p.Nome,
+                ClienteId = p.ClienteId,
+                ClienteNome = clienteMap.GetValueOrDefault(p.ClienteId, "N/D"),
+                TotaleOre = totale
+            });
+        }
+
+        return Ok(riepilogo);
+    }
+
     [HttpPost("ore")]
     public async Task<ActionResult<OraLavorata>> CreateOraLavorata(OraLavorata ora)
     {

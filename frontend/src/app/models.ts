@@ -12,6 +12,7 @@ export interface Progetto {
   nome: string;
   descrizione?: string;
   clienteId: number;
+  clienteNome?: string;
 }
 
 export interface OraLavorata {
