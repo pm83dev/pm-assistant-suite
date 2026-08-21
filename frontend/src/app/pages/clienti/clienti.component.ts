@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente } from '../../models';
 import { TimeTrackingService } from '../../time-tracking.service';
@@ -24,7 +24,9 @@ export class ClientiComponent implements OnInit {
     indirizzo: '',
   };
 
-  constructor(private service: TimeTrackingService) {}
+  private service = inject(TimeTrackingService);
+
+  constructor() {}
 
   ngOnInit(): void {
     this.loadClienti();

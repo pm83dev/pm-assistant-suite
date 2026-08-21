@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -52,7 +52,9 @@ export class OreComponent implements OnInit {
   selectedDayDate: string = '';
   selectedClienteId = 0;
 
-  constructor(private service: TimeTrackingService) {}
+  private service = inject(TimeTrackingService);
+
+  constructor() {}
 
   get visibleMonth(): MonthView | undefined {
     return this.calendarView[this.currentMonthIndex];

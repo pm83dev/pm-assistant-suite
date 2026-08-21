@@ -11,7 +11,12 @@ import { AuthService } from '../../auth/auth.service';
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
+  isMenuCollapsed = true;
   private authService = inject(AuthService);
+
+  toggleMenu(): void {
+    this.isMenuCollapsed = !this.isMenuCollapsed;
+  }
 
   logout(): void {
     this.authService.logout();

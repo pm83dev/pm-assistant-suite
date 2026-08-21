@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente, Progetto } from '../../models';
 import { TimeTrackingService } from '../../time-tracking.service';
-import { getBadgeBackground as _getBg, getBadgeBorder as _getBd } from '../../utils/badge-color';
+import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../utils/badge-color';
 
 @Component({
   selector: 'app-progetti',
@@ -25,7 +25,9 @@ export class ProgettiComponent implements OnInit {
     clienteId: 0,
   };
 
-  constructor(private service: TimeTrackingService) {}
+  private service = inject(TimeTrackingService);
+
+  constructor() {}
 
   ngOnInit(): void {
     this.loadClienti();
