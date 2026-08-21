@@ -11,7 +11,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  private readonly apiOreTracking = 'http://localhost:5108';
+  private readonly apiOreTracking = '';
   private readonly apiPmAssistant = 'http://localhost:5000';
 
   login(username: string, password: string): Observable<LoginResponse> {
