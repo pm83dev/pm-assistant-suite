@@ -240,6 +240,12 @@
   margin-bottom: 0;
 }
 
+.day-details-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .day-entries {
   display: flex;
   flex-direction: column;

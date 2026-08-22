@@ -4,9 +4,16 @@
       <h2>Riepilogo Ore</h2>
     </div>
     <div class="col-auto export-bar">
-      <select [(ngModel)]="selectedClienteId" name="exportCliente" class="cliente-select" title="Cliente per il report">
+      <select
+        [(ngModel)]="selectedClienteId"
+        name="exportCliente"
+        class="cliente-select"
+        title="Cliente per il report"
+      >
         <option [ngValue]="0">-- Cliente --</option>
-        <option *ngFor="let c of clienti" [ngValue]="c.id">{{ c.nome }}</option>
+        @for (c of clienti; track c.id) {
+          <option [ngValue]="c.id">{{ c.nome }}</option>
+        }
       </select>
       <button
         class="btn btn-outline-pdf"
@@ -25,14 +32,16 @@
     <div class="form-container" (click)="$event.stopPropagation()">
       <div class="form-header">
         <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
-        <button type="button" class="form-close" (click)="closeForm()" aria-label="Chiudi">&times;</button>
+        <button type="button" class="form-close" (click)="closeForm()" aria-label="Chiudi">
+          &times;
+        </button>
       </div>
       <form (ngSubmit)="save()">
         <div class="form-group">
           <label>Progetto *</label>
           <select [(ngModel)]="form.progettoId" name="progettoId" required>
-            <option value="0">-- Seleziona Progetto --</option>
-            <option *ngFor="let p of progetti" [value]="p.id">{{ p.nome }}</option>
+            <option [ngValue]="0">-- Seleziona Progetto --</option>
+            <option *ngFor="let p of progetti" [ngValue]="p.id">{{ p.nome }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -72,7 +81,7 @@
   <div class="summary">
     <div class="summary-total">
       <strong>Totale Ore:</strong> {{ getTotalOre().toFixed(1) }}h
-      <strong class="ms-5">Totale Importo:</strong> {{ getTotalOre() * 31.25 }}€
+      <strong class="ms-5">Totale Importo:</strong> {{ getTotalImporto().toFixed(2) }}€
     </div>
     <div class="summary-breakdown" *ngIf="progetti.length > 0">
       <strong>Totale Ore per progetto:</strong>
@@ -162,7 +171,12 @@
   <div class="day-details" *ngIf="selectedDayEntries.length > 0">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0">{{ selectedDayDate }}</h3>
-      <button class="btn btn-sm btn-secondary" (click)="closeDayDetails()">Chiudi</button>
+      <div class="day-details-actions">
+        <button class="btn btn-sm btn-primary" (click)="addOraForSelectedDay()">
+          + Aggiungi ore
+        </button>
+        <button class="btn btn-sm btn-secondary" (click)="closeDayDetails()">Chiudi</button>
+      </div>
     </div>
     <hr />
     <div class="row day-entries">

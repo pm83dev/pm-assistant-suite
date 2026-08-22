@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente, Progetto } from '../../models/models';
-import { ClientiService } from '../../services/clienti/clienti.service';
-import { ProgettiService } from '../../services/progetti/progetti.service';
 import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../utils/badge-color';
+import { ProjectManagementService } from '../../services/progetti/progetti-management.service';
 
 @Component({
   selector: 'app-progetti',
@@ -13,7 +12,7 @@ import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../ut
   templateUrl: './progetti.component.html',
   styleUrls: ['./progetti.component.css'],
 })
-export class ProgettiComponent implements OnInit {
+export class ProgettiComponent {
   progetti: Progetto[] = [];
   clienti: Cliente[] = [];
   selectedProgetto: Progetto | null = null;
@@ -26,26 +25,12 @@ export class ProgettiComponent implements OnInit {
     clienteId: 0,
   };
 
-  private projectService = inject(ProgettiService);
-  private clientService = inject(ClientiService);
+  projManagementService = inject(ProjectManagementService);
 
-  constructor() {}
-
-  ngOnInit(): void {
-    this.loadClienti();
-    this.loadProgetti();
-  }
-
-  loadClienti(): void {
-    this.clientService.getClient().subscribe({
-      next: (data: Cliente[]) => (this.clienti = data),
-    });
-  }
-
-  loadProgetti(): void {
-    this.projectService.getProgetti().subscribe({
-      next: (data: Progetto[]) => (this.progetti = data),
-      error: (err: unknown) => console.error('Errore nel caricamento progetti:', err),
+  constructor() {
+    effect(() => {
+      this.progetti = this.projManagementService.progetti();
+      this.clienti = this.projManagementService.clienti();
     });
   }
 
@@ -76,26 +61,22 @@ export class ProgettiComponent implements OnInit {
         descrizione: this.form.descrizione || undefined,
         clienteId: this.form.clienteId,
       };
-      this.projectService.updateProgetto(updated).subscribe({
-        next: () => {
-          this.loadProgetti();
-          this.closeForm();
-        },
+      this.projManagementService.updateProgetto(updated).subscribe({
+        next: () => this.closeForm(),
+        error: (err) => console.error('Errore nel salvataggio:', err),
       });
     } else {
-      this.projectService.addProgetto(this.form).subscribe({
-        next: () => {
-          this.loadProgetti();
-          this.closeForm();
-        },
+      this.projManagementService.addProgetto(this.form).subscribe({
+        next: () => this.closeForm(),
+        error: (err) => console.error('Errore nel salvataggio:', err),
       });
     }
   }
 
   delete(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questo progetto?')) {
-      this.projectService.deleteProgetto(id).subscribe({
-        next: () => this.loadProgetti(),
+      this.projManagementService.deleteProgetto(id).subscribe({
+        error: (err) => console.error("Errore nell'eliminazione:", err),
       });
     }
   }

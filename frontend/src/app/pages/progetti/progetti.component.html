@@ -11,8 +11,8 @@
       <div class="form-group">
         <label>Cliente *</label>
         <select [(ngModel)]="form.clienteId" name="clienteId" required>
-          <option value="0">-- Seleziona Cliente --</option>
-          <option *ngFor="let c of clienti" [value]="c.id">{{ c.nome }}</option>
+          <option [ngValue]="0">-- Seleziona Cliente --</option>
+          <option *ngFor="let c of clienti" [ngValue]="c.id">{{ c.nome }}</option>
         </select>
       </div>
       <div class="form-group">
