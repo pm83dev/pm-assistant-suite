@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cliente } from '../../models';
-import { TimeTrackingService } from '../../time-tracking.service';
+import { Cliente } from '../../models/models';
+import { ClientiService } from '../../services/clienti/clienti.service';
 
 @Component({
   selector: 'app-clienti',
@@ -24,7 +24,7 @@ export class ClientiComponent implements OnInit {
     indirizzo: '',
   };
 
-  private service = inject(TimeTrackingService);
+  private clientiService = inject(ClientiService);
 
   constructor() {}
 
@@ -33,7 +33,7 @@ export class ClientiComponent implements OnInit {
   }
 
   loadClienti(): void {
-    this.service.getClient().subscribe({
+    this.clientiService.getClient().subscribe({
       next: (data: Cliente[]) => (this.clienti = data),
       error: (err: unknown) => console.error('Errore nel caricamento clienti:', err),
     });
@@ -68,14 +68,14 @@ export class ClientiComponent implements OnInit {
         telefono: this.form.telefono || undefined,
         indirizzo: this.form.indirizzo || undefined,
       };
-      this.service.updateCliente(updated).subscribe({
+      this.clientiService.updateCliente(updated).subscribe({
         next: () => {
           this.loadClienti();
           this.closeForm();
         },
       });
     } else {
-      this.service.addCliente(this.form).subscribe({
+      this.clientiService.addCliente(this.form).subscribe({
         next: () => {
           this.loadClienti();
           this.closeForm();
@@ -86,7 +86,7 @@ export class ClientiComponent implements OnInit {
 
   delete(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questo cliente?')) {
-      this.service.deleteCliente(id).subscribe({
+      this.clientiService.deleteCliente(id).subscribe({
         next: () => this.loadClienti(),
       });
     }

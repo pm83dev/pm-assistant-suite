@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cliente, Nota, Progetto } from '../../models';
-import { TimeTrackingService } from '../../time-tracking.service';
+import { Cliente, Nota, Progetto } from '../../models/models';
+import { ClientiService } from '../../services/clienti/clienti.service';
+import { NoteService } from '../../services/note/note.service';
+import { ProgettiService } from '../../services/progetti/progetti.service';
 import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../utils/badge-color';
 
 @Component({
@@ -26,7 +28,9 @@ export class NoteComponent implements OnInit {
     progettoId: 0,
   };
 
-  private service = inject(TimeTrackingService);
+  private noteService = inject(NoteService);
+  private clientService = inject(ClientiService);
+  private projectService = inject(ProgettiService);
 
   constructor() {}
 
@@ -37,19 +41,19 @@ export class NoteComponent implements OnInit {
   }
 
   loadProgetti(): void {
-    this.service.getProgetti().subscribe({
+    this.projectService.getProgetti().subscribe({
       next: (data: Progetto[]) => (this.progetti = data),
     });
   }
 
   loadClienti(): void {
-    this.service.getClient().subscribe({
+    this.clientService.getClient().subscribe({
       next: (data: Cliente[]) => (this.clienti = data),
     });
   }
 
   loadNote(): void {
-    this.service.getNote().subscribe({
+    this.noteService.getNote().subscribe({
       next: (data: Nota[]) => (this.note = data),
       error: (err: unknown) => console.error('Errore nel caricamento note:', err),
     });
@@ -82,14 +86,14 @@ export class NoteComponent implements OnInit {
         contenuto: this.form.contenuto,
         progettoId: this.form.progettoId,
       };
-      this.service.updateNota(updated).subscribe({
+      this.noteService.updateNota(updated).subscribe({
         next: () => {
           this.loadNote();
           this.closeForm();
         },
       });
     } else {
-      this.service
+      this.noteService
         .addNota({
           dataCreazione: new Date().toISOString(),
           contenuto: this.form.contenuto,
@@ -107,7 +111,7 @@ export class NoteComponent implements OnInit {
 
   delete(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
-      this.service.deleteNota(id).subscribe({
+      this.noteService.deleteNota(id).subscribe({
         next: () => this.loadNote(),
       });
     }

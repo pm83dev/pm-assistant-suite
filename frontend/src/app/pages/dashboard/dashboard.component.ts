@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Cliente, OraLavorata, Progetto } from '../../models';
-import { TimeTrackingService } from '../../time-tracking.service';
+import { Cliente, OraLavorata, Progetto } from '../../models/models';
+import { ClientiService } from '../../services/clienti/clienti.service';
+import { OreService } from '../../services/ore/ore.service';
+import { ProgettiService } from '../../services/progetti/progetti.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,7 +22,9 @@ export class DashboardComponent implements OnInit {
   dataRiferimento: Date = new Date();
   progettiConTotali: { progetto: Progetto; totaleOre: number }[] = [];
 
-  private timeService = inject(TimeTrackingService);
+  private projectService = inject(ProgettiService);
+  private clientService = inject(ClientiService);
+  private oreService = inject(OreService);
 
   ngOnInit() {
     this.loadStats();
@@ -33,7 +37,7 @@ export class DashboardComponent implements OnInit {
   }
 
   getProgettiConOreTotali(): void {
-    this.timeService.getRiepilogoProgetti().subscribe({
+    this.oreService.getRiepilogoProgetti().subscribe({
       next: (data: any[]) => {
         this.progettiConTotali = data.map((item) => ({
           progetto: {
@@ -50,15 +54,15 @@ export class DashboardComponent implements OnInit {
   }
 
   loadStats(): void {
-    this.timeService
+    this.clientService
       .getClient()
       .subscribe({ next: (c: Cliente[]) => (this.totalClienti = c.length) });
-    this.timeService.getProgetti().subscribe({
+    this.projectService.getProgetti().subscribe({
       next: (p: Progetto[]) => {
         this.totalProgetti = p.length;
       },
     });
-    this.timeService.getOreLavorate().subscribe({
+    this.oreService.getOreLavorate().subscribe({
       next: (o: OraLavorata[]) => {
         this.totalOre = o.reduce((s, x) => s + x.ore, 0);
       },
@@ -70,7 +74,7 @@ export class DashboardComponent implements OnInit {
     const a = new Date(anno, mese + 1, 0, 23, 59, 59);
     this.meseCorrente = da.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
 
-    this.timeService.getOreByRange(da, a).subscribe({
+    this.oreService.getOreByRange(da, a).subscribe({
       next: (o: OraLavorata[]) => {
         this.oreUltimoMese = o.reduce((s, x) => s + x.ore, 0);
       },

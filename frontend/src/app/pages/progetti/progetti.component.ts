@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cliente, Progetto } from '../../models';
-import { TimeTrackingService } from '../../time-tracking.service';
+import { Cliente, Progetto } from '../../models/models';
+import { ClientiService } from '../../services/clienti/clienti.service';
+import { ProgettiService } from '../../services/progetti/progetti.service';
 import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../utils/badge-color';
 
 @Component({
@@ -25,7 +26,8 @@ export class ProgettiComponent implements OnInit {
     clienteId: 0,
   };
 
-  private service = inject(TimeTrackingService);
+  private projectService = inject(ProgettiService);
+  private clientService = inject(ClientiService);
 
   constructor() {}
 
@@ -35,13 +37,13 @@ export class ProgettiComponent implements OnInit {
   }
 
   loadClienti(): void {
-    this.service.getClient().subscribe({
+    this.clientService.getClient().subscribe({
       next: (data: Cliente[]) => (this.clienti = data),
     });
   }
 
   loadProgetti(): void {
-    this.service.getProgetti().subscribe({
+    this.projectService.getProgetti().subscribe({
       next: (data: Progetto[]) => (this.progetti = data),
       error: (err: unknown) => console.error('Errore nel caricamento progetti:', err),
     });
@@ -74,14 +76,14 @@ export class ProgettiComponent implements OnInit {
         descrizione: this.form.descrizione || undefined,
         clienteId: this.form.clienteId,
       };
-      this.service.updateProgetto(updated).subscribe({
+      this.projectService.updateProgetto(updated).subscribe({
         next: () => {
           this.loadProgetti();
           this.closeForm();
         },
       });
     } else {
-      this.service.addProgetto(this.form).subscribe({
+      this.projectService.addProgetto(this.form).subscribe({
         next: () => {
           this.loadProgetti();
           this.closeForm();
@@ -92,7 +94,7 @@ export class ProgettiComponent implements OnInit {
 
   delete(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questo progetto?')) {
-      this.service.deleteProgetto(id).subscribe({
+      this.projectService.deleteProgetto(id).subscribe({
         next: () => this.loadProgetti(),
       });
     }
