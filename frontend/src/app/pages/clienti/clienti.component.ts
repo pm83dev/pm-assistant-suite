@@ -1,18 +1,16 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Cliente } from '../../models/models';
-import { ClientiService } from '../../services/clienti/clienti.service';
+import { ClienteManagementService } from '../../services/clienti/clienti-management.service';
 
 @Component({
   selector: 'app-clienti',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './clienti.component.html',
   styleUrls: ['./clienti.component.css'],
 })
-export class ClientiComponent implements OnInit {
-  clienti: Cliente[] = [];
+export class ClientiComponent {
   selectedCliente: Cliente | null = null;
   showForm = false;
   editMode = false;
@@ -24,19 +22,17 @@ export class ClientiComponent implements OnInit {
     indirizzo: '',
   };
 
-  private clientiService = inject(ClientiService);
+  clientiManagementService = inject(ClienteManagementService);
 
-  constructor() {}
-
-  ngOnInit(): void {
-    this.loadClienti();
+  constructor() {
+    effect(() => {
+      this.clientiManagementService.clienti();
+      this.clientiManagementService.loading();
+    });
   }
 
-  loadClienti(): void {
-    this.clientiService.getClient().subscribe({
-      next: (data: Cliente[]) => (this.clienti = data),
-      error: (err: unknown) => console.error('Errore nel caricamento clienti:', err),
-    });
+  get clienti(): Cliente[] {
+    return this.clientiManagementService.clienti();
   }
 
   openNewForm(): void {
@@ -68,26 +64,22 @@ export class ClientiComponent implements OnInit {
         telefono: this.form.telefono || undefined,
         indirizzo: this.form.indirizzo || undefined,
       };
-      this.clientiService.updateCliente(updated).subscribe({
-        next: () => {
-          this.loadClienti();
-          this.closeForm();
-        },
+      this.clientiManagementService.updateCliente(updated).subscribe({
+        next: () => this.closeForm(),
+        error: (err) => console.error('Errore nel salvataggio:', err),
       });
     } else {
-      this.clientiService.addCliente(this.form).subscribe({
-        next: () => {
-          this.loadClienti();
-          this.closeForm();
-        },
+      this.clientiManagementService.addCliente(this.form).subscribe({
+        next: () => this.closeForm(),
+        error: (err) => console.error('Errore nel salvataggio:', err),
       });
     }
   }
 
   delete(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questo cliente?')) {
-      this.clientiService.deleteCliente(id).subscribe({
-        next: () => this.loadClienti(),
+      this.clientiManagementService.deleteCliente(id).subscribe({
+        error: (err) => console.error("Errore nell'eliminazione:", err),
       });
     }
   }

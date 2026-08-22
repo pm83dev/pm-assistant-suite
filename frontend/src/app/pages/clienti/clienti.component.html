@@ -4,8 +4,14 @@
     <button class="btn btn-primary" (click)="openNewForm()">+ Nuovo Cliente</button>
   </div>
 
+  <!-- Loading -->
+  @if (clientiManagementService.loading()) {
+    <div class="loading">Caricamento...</div>
+  }
+
   <!-- Form -->
-  <div class="form-container" *ngIf="showForm">
+  @if (showForm) {
+    <div class="form-container">
     <h3>{{ editMode ? 'Modifica Cliente' : 'Nuovo Cliente' }}</h3>
     <form (ngSubmit)="save()">
       <div class="form-group">
@@ -29,27 +35,34 @@
         <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
       </div>
     </form>
-  </div>
+    </div>
+  }
 
   <!-- Lista Clienti -->
   <div class="list-container">
-    <div class="card" *ngFor="let c of clienti" [class.selected]="selectedCliente?.id === c.id">
-      <div class="card-header">
-        <h3>{{ c.nome }}</h3>
-        <div class="actions">
-          <button class="btn btn-sm btn-edit" (click)="openEditForm(c)">Modifica</button>
-          <button class="btn btn-sm btn-delete" (click)="delete(c.id)">Elimina</button>
+    @for (c of clienti; track c.id) {
+      <div class="card" [class.selected]="selectedCliente?.id === c.id">
+        <div class="card-header">
+          <h3>{{ c.nome }}</h3>
+          <div class="actions">
+            <button class="btn btn-sm btn-edit" (click)="openEditForm(c)">Modifica</button>
+            <button class="btn btn-sm btn-delete" (click)="delete(c.id)">Elimina</button>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (c.email) {
+            <p><strong>Email:</strong> {{ c.email }}</p>
+          }
+          @if (c.telefono) {
+            <p><strong>Telefono:</strong> {{ c.telefono }}</p>
+          }
+          @if (c.indirizzo) {
+            <p><strong>Indirizzo:</strong> {{ c.indirizzo }}</p>
+          }
         </div>
       </div>
-      <div class="card-body">
-        <p *ngIf="c.email"><strong>Email:</strong> {{ c.email }}</p>
-        <p *ngIf="c.telefono"><strong>Telefono:</strong> {{ c.telefono }}</p>
-        <p *ngIf="c.indirizzo"><strong>Indirizzo:</strong> {{ c.indirizzo }}</p>
-      </div>
-    </div>
-
-    <div class="empty" *ngIf="clienti.length === 0">
-      Nessun cliente presente. Aggiungi il tuo primo cliente!
-    </div>
+    } @empty {
+      <div class="empty">Nessun cliente presente. Aggiungi il tuo primo cliente!</div>
+    }
   </div>
 </div>

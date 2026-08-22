@@ -61,9 +61,9 @@ public class OraLavorata
 public class RiepilogoProgettiOre
 {
     public int ProgettoId { get; set; }
-    public string ProgettoNome { get; set; }
+    public required string ProgettoNome { get; set; }
     public int ClienteId { get; set; }
-    public string ClienteNome { get; set; }
+    public required string ClienteNome { get; set; }
     public decimal TotaleOre { get; set; }
 }
 

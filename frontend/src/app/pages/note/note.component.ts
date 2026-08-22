@@ -1,23 +1,25 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cliente, Nota, Progetto } from '../../models/models';
-import { ClientiService } from '../../services/clienti/clienti.service';
-import { NoteService } from '../../services/note/note.service';
-import { ProgettiService } from '../../services/progetti/progetti.service';
 import { getBadgeBorder as _getBd, getBadgeBackground as _getBg } from '../../utils/badge-color';
+import { NoteManagementService } from '../../services/note/note-management.service';
+import { Nota } from '../../models/models';
 
 @Component({
   selector: 'app-note',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './note.component.html',
   styleUrls: ['./note.component.css'],
 })
-export class NoteComponent implements OnInit {
-  note: Nota[] = [];
-  progetti: Progetto[] = [];
-  clienti: Cliente[] = [];
+export class NoteComponent {
+
+  private noteManagement = inject(NoteManagementService);
+
+  note = this.noteManagement.note;
+  progetti = this.noteManagement.progetti;
+  clienti = this.noteManagement.clienti;
+  loading = this.noteManagement.loading;
+
   selectedNota: Nota | null = null;
   showForm = false;
   editMode = false;
@@ -28,40 +30,9 @@ export class NoteComponent implements OnInit {
     progettoId: 0,
   };
 
-  private noteService = inject(NoteService);
-  private clientService = inject(ClientiService);
-  private projectService = inject(ProgettiService);
-
-  constructor() {}
-
-  ngOnInit(): void {
-    this.loadClienti();
-    this.loadProgetti();
-    this.loadNote();
-  }
-
-  loadProgetti(): void {
-    this.projectService.getProgetti().subscribe({
-      next: (data: Progetto[]) => (this.progetti = data),
-    });
-  }
-
-  loadClienti(): void {
-    this.clientService.getClient().subscribe({
-      next: (data: Cliente[]) => (this.clienti = data),
-    });
-  }
-
-  loadNote(): void {
-    this.noteService.getNote().subscribe({
-      next: (data: Nota[]) => (this.note = data),
-      error: (err: unknown) => console.error('Errore nel caricamento note:', err),
-    });
-  }
-
   openNewForm(): void {
     this.editMode = false;
-    this.form = { titolo: '', contenuto: '', progettoId: this.progetti[0]?.id || 0 };
+    this.form = { titolo: '', contenuto: '', progettoId: this.progetti()[0]?.id || 0 };
     this.showForm = true;
   }
 
@@ -86,14 +57,11 @@ export class NoteComponent implements OnInit {
         contenuto: this.form.contenuto,
         progettoId: this.form.progettoId,
       };
-      this.noteService.updateNota(updated).subscribe({
-        next: () => {
-          this.loadNote();
-          this.closeForm();
-        },
+      this.noteManagement.updateNota(updated).subscribe({
+        next: () => { this.closeForm(); },
       });
     } else {
-      this.noteService
+      this.noteManagement
         .addNota({
           dataCreazione: new Date().toISOString(),
           contenuto: this.form.contenuto,
@@ -101,18 +69,15 @@ export class NoteComponent implements OnInit {
           progettoId: this.form.progettoId,
         })
         .subscribe({
-          next: () => {
-            this.loadNote();
-            this.closeForm();
-          },
+          next: () => { this.closeForm(); },
         });
     }
   }
 
   delete(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
-      this.noteService.deleteNota(id).subscribe({
-        next: () => this.loadNote(),
+      this.noteManagement.deleteNota(id).subscribe({
+        error: (err) => console.error("Errore nell'eliminazione:", err),
       });
     }
   }
@@ -122,28 +87,14 @@ export class NoteComponent implements OnInit {
     this.selectedNota = null;
   }
 
-  getProgettoNome(progettoId: number): string {
-    const p = this.progetti.find((p) => p.id === progettoId);
-    return p ? p.nome : 'N/D';
-  }
+  getProgettoNome = this.noteManagement.getProgettoNome.bind(this.noteManagement);
+  getClienteNomeDaProgetto = this.noteManagement.getClienteNomeDaProgetto.bind(this.noteManagement);
 
-  getClienteNomeDaProgetto(progettoId: number): string {
-    const p = this.progetti.find((p) => p.id === progettoId);
-    if (!p) return 'N/D';
-    const c = this.clienti.find((c) => c.id === p.clienteId);
-    return c ? c.nome : 'N/D';
-  }
-
-  // Wrapper per le funzioni di colore
-  getBadgeBackground(name: string): string {
-    return _getBg(name);
-  }
-
-  getBadgeBorder(name: string): string {
-    return _getBd(name);
-  }
+  getBadgeBackground = _getBg;
+  getBadgeBorder = _getBd;
 
   formatDate(date: string): string {
+    if (!date) return '';
     return new Date(date).toLocaleDateString('it-IT', {
       day: '2-digit',
       month: '2-digit',

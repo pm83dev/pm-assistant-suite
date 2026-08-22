@@ -9,7 +9,7 @@
         <div class="col-md-3 col-6 mb-2">
           <div class="card shadow-sm border-primary">
             <div class="card-body text-center">
-              <h3 class="text-primary mb-0">{{ totalClienti }}</h3>
+              <h3 class="text-primary mb-0">{{ dashboard.totalClienti() }}</h3>
               <small class="text-muted">Clienti</small>
             </div>
           </div>
@@ -17,7 +17,7 @@
         <div class="col-md-3 col-6 mb-2">
           <div class="card shadow-sm border-success">
             <div class="card-body text-center">
-              <h3 class="text-success mb-0">{{ totalProgetti }}</h3>
+              <h3 class="text-success mb-0">{{ dashboard.totalProgetti() }}</h3>
               <small class="text-muted">Progetti</small>
             </div>
           </div>
@@ -25,7 +25,7 @@
         <div class="col-md-3 col-6 mb-2">
           <div class="card shadow-sm border-warning">
             <div class="card-body text-center">
-              <h3 class="text-warning mb-0">{{ totalOre.toFixed(1) }}</h3>
+              <h3 class="text-warning mb-0">{{ dashboard.totalOre().toFixed(1) }}</h3>
               <small class="text-muted">Ore Totali</small>
             </div>
           </div>
@@ -38,11 +38,11 @@
                   &#9664;
                 </button>
                 <h3 class="text-info mb-0" style="min-width: 120px">
-                  {{ oreUltimoMese.toFixed(1) }}
+                  {{ dashboard.oreUltimoMese().toFixed(1) }}
                 </h3>
                 <button class="btn btn-sm btn-outline-info" (click)="cambiaMese(1)">&#9654;</button>
               </div>
-              <small class="text-muted">Ore {{ meseCorrente }}</small>
+              <small class="text-muted">Ore {{ dashboard.meseCorrente() }}</small>
             </div>
           </div>
         </div>
@@ -61,11 +61,13 @@
       <div class="card-body">
         <table class="table table-bordered table-dark table-hover table-striped">
           <tbody>
-            <tr *ngFor="let item of progettiConTotali">
-              <td>{{ item.progetto.clienteNome }}</td>
-              <td>{{ item.progetto.nome }}</td>
-              <td>{{ item.totaleOre.toFixed(1) }} Hrs</td>
-            </tr>
+            @for (item of dashboard.progettiConTotali(); track item.progetto.id) {
+              <tr>
+                <td>{{ item.progetto.clienteNome }}</td>
+                <td>{{ item.progetto.nome }}</td>
+                <td>{{ item.totaleOre.toFixed(1) }} Hrs</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>

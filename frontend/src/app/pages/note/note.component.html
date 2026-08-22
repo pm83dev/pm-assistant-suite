@@ -4,15 +4,23 @@
     <button class="btn btn-primary" (click)="openNewForm()">+ Nuova Nota</button>
   </div>
 
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading">Caricamento...</div>
+  }
+
   <!-- Form -->
-  <div class="form-container" *ngIf="showForm">
+  @if (showForm) {
+    <div class="form-container">
     <h3>{{ editMode ? 'Modifica Nota' : 'Nuova Nota' }}</h3>
     <form (ngSubmit)="save()">
       <div class="form-group">
         <label>Progetto *</label>
         <select [(ngModel)]="form.progettoId" name="progettoId" required>
           <option value="0">-- Seleziona Progetto --</option>
-          <option *ngFor="let p of progetti" [value]="p.id">{{ p.nome }}</option>
+          @for (p of progetti(); track p.id) {
+            <option [value]="p.id">{{ p.nome }}</option>
+          }
         </select>
       </div>
       <div class="form-group">
@@ -28,11 +36,13 @@
         <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
       </div>
     </form>
-  </div>
+    </div>
+  }
 
   <!-- Lista Note -->
   <div class="list-container">
-    <div class="card" *ngFor="let n of note" [class.selected]="selectedNota?.id === n.id">
+    @for (n of note(); track n.id) {
+    <div class="card">
       <div class="card-header">
         <div>
           <span class="date">{{ formatDate(n.dataCreazione) }}</span>
@@ -45,13 +55,14 @@
         </div>
       </div>
       <div class="card-body">
-        <h4 *ngIf="n.titolo">{{ n.titolo }}</h4>
+        @if (n.titolo) {
+          <h4>{{ n.titolo }}</h4>
+        }
         <p>{{ n.contenuto }}</p>
       </div>
     </div>
-
-    <div class="empty" *ngIf="note.length === 0">
-      Nessuna nota presente. Aggiungi la tua prima nota!
-    </div>
+    } @empty {
+    <div class="empty">Nessuna nota presente. Aggiungi la tua prima nota!</div>
+    }
   </div>
 </div>
