@@ -27,7 +27,7 @@ dotnet build
 dotnet run
 ```
 
-### ore-tracking (API + frontend)
+### ore-tracking (API REST standalone)
 ```bash
 cd ore-tracking/Api
 dotnet build
@@ -46,7 +46,6 @@ npm run build        # produce output in dist/
 ## Struttura cartelle principale
 - `pm-assistant/` → applicazione principale (.NET 8)
 - `ore-tracking/Api/` → API REST per tracciamento ore (.NET 8)
-- `ore-tracking/Web/` → frontend Angular (se presente)
 - `frontend/` → frontend Angular separato (eventuale)
 
 ## Note operative per agente AI

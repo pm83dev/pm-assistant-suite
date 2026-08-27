@@ -19,33 +19,39 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse justify-content-end" [class.show]="!isMenuCollapsed" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            routerLink="/dashboard"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            >Dashboard</a
-          >
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/clienti" routerLinkActive="active">Clienti</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/progetti" routerLinkActive="active">Progetti</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/ore" routerLinkActive="active">Riepilogo Ore</a>
-        </li>
-        <li class="nav-item" *ngIf="isAuthenticated()">
-          <a class="nav-link" routerLink="/note" routerLinkActive="active">Note</a>
-        </li>
-        <li class="nav-item" *ngIf="isAuthenticated()">
-          <a class="nav-link" (click)="logout()">Logout</a>
-        </li>
-      </ul>
+    <div
+      class="collapse navbar-collapse justify-content-end"
+      [class.show]="!isMenuCollapsed"
+      id="navbarNav"
+    >
+      @if (isAuthenticated()) {
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/dashboard"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              >Dashboard</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/clienti" routerLinkActive="active">Clienti</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/progetti" routerLinkActive="active">Progetti</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/ore" routerLinkActive="active">Riepilogo Ore</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/note" routerLinkActive="active">Note</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" (click)="logout()">Logout</a>
+          </li>
+        </ul>
+      }
     </div>
   </div>
 </nav>

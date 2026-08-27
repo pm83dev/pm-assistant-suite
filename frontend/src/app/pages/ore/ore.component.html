@@ -28,54 +28,58 @@
   </div>
 
   <!-- Form -->
-  <div class="form-overlay" *ngIf="showForm" (click)="closeForm()">
-    <div class="form-container" (click)="$event.stopPropagation()">
-      <div class="form-header">
-        <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
-        <button type="button" class="form-close" (click)="closeForm()" aria-label="Chiudi">
-          &times;
-        </button>
+  @if (showForm) {
+    <div class="form-overlay" (click)="closeForm()">
+      <div class="form-container" (click)="$event.stopPropagation()">
+        <div class="form-header">
+          <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
+          <button type="button" class="form-close" (click)="closeForm()" aria-label="Chiudi">
+            &times;
+          </button>
+        </div>
+        <form (ngSubmit)="save()">
+          <div class="form-group">
+            <label>Progetto *</label>
+            <select [(ngModel)]="form.progettoId" name="progettoId" required>
+              <option [ngValue]="0">-- Seleziona Progetto --</option>
+              @for (p of progetti; track p.id) {
+                <option [ngValue]="p.id">{{ p.nome }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data *</label>
+            <input type="date" [(ngModel)]="form.data" name="data" required />
+          </div>
+          <div class="form-group">
+            <label>Ore *</label>
+            <input
+              type="number"
+              [(ngModel)]="form.ore"
+              name="ore"
+              min="0.25"
+              step="0.25"
+              required
+              placeholder="Es: 2.5"
+            />
+          </div>
+          <div class="form-group">
+            <label>Descrizione</label>
+            <textarea
+              [(ngModel)]="form.descrizione"
+              name="descrizione"
+              rows="3"
+              placeholder="Cosa hai fatto?"
+            ></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salva</button>
+            <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+          </div>
+        </form>
       </div>
-      <form (ngSubmit)="save()">
-        <div class="form-group">
-          <label>Progetto *</label>
-          <select [(ngModel)]="form.progettoId" name="progettoId" required>
-            <option [ngValue]="0">-- Seleziona Progetto --</option>
-            <option *ngFor="let p of progetti" [ngValue]="p.id">{{ p.nome }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Data *</label>
-          <input type="date" [(ngModel)]="form.data" name="data" required />
-        </div>
-        <div class="form-group">
-          <label>Ore *</label>
-          <input
-            type="number"
-            [(ngModel)]="form.ore"
-            name="ore"
-            min="0.25"
-            step="0.25"
-            required
-            placeholder="Es: 2.5"
-          />
-        </div>
-        <div class="form-group">
-          <label>Descrizione</label>
-          <textarea
-            [(ngModel)]="form.descrizione"
-            name="descrizione"
-            rows="3"
-            placeholder="Cosa hai fatto?"
-          ></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-success">Salva</button>
-          <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
-        </div>
-      </form>
     </div>
-  </div>
+  }
 
   <!-- Riepilogo -->
   <div class="summary">
@@ -83,135 +87,157 @@
       <strong>Totale Ore:</strong> {{ getTotalOre().toFixed(1) }}h
       <strong class="ms-5">Totale Importo:</strong> {{ getTotalImporto().toFixed(2) }}€
     </div>
-    <div class="summary-breakdown" *ngIf="progetti.length > 0">
-      <strong>Totale Ore per progetto:</strong>
-      <ul>
-        <ng-container *ngFor="let project of progetti">
-          <li *ngIf="getTotalOrePerProject(project.id) > 0">
-            {{ project.nome }}: {{ getTotalOrePerProject(project.id).toFixed(1) }}h
-          </li>
-        </ng-container>
-      </ul>
-    </div>
-  </div>
+    @if (progetti.length > 0) {
+      <div class="summary-breakdown">
+        <strong>Totale Ore per progetto:</strong>
+        <ul>
+          @for (project of progetti; track project.id) {
+            @if (getTotalOrePerProject(project.id) > 0) {
+              <li>{{ project.nome }}: {{ getTotalOrePerProject(project.id).toFixed(1) }}h</li>
+            }
+          }
+        </ul>
+      </div>
+    }
 
-  <!-- Calendario Ore - Carosello Mesi -->
-  <div class="calendar-container" *ngIf="calendarView.length > 0">
-    <div class="card calendar-card">
-      <div class="card-body p-0">
-        <div class="carousel-wrapper">
-          <button
-            class="btn-nav"
-            (click)="prevMonth()"
-            [disabled]="currentMonthIndex === 0"
-            title="Mese precedente"
-          >
-            &#9664;
-          </button>
+    <!-- Calendario Ore - Carosello Mesi -->
+    @if (calendarView.length > 0) {
+      <div class="calendar-container">
+        <div class="card calendar-card">
+          <div class="card-body p-0">
+            <div class="carousel-wrapper">
+              <button
+                class="btn-nav"
+                (click)="prevMonth()"
+                [disabled]="currentMonthIndex === 0"
+                title="Mese precedente"
+              >
+                &#9664;
+              </button>
 
-          <div class="month-view-carousel">
-            <div class="month-view" *ngIf="visibleMonth">
-              <h3 class="month-title">{{ visibleMonth.month }} {{ visibleMonth.year }}</h3>
-              <div class="calendar-grid">
-                <div class="day-header">Lun</div>
-                <div class="day-header">Mar</div>
-                <div class="day-header">Mer</div>
-                <div class="day-header">Gio</div>
-                <div class="day-header">Ven</div>
-                <div class="day-header">Sab</div>
-                <div class="day-header">Dom</div>
+              <div class="month-view-carousel">
+                @if (visibleMonth) {
+                  <div class="month-view">
+                    <h3 class="month-title">{{ visibleMonth.month }} {{ visibleMonth.year }}</h3>
+                    <div class="calendar-grid">
+                      <div class="day-header">Lun</div>
+                      <div class="day-header">Mar</div>
+                      <div class="day-header">Mer</div>
+                      <div class="day-header">Gio</div>
+                      <div class="day-header">Ven</div>
+                      <div class="day-header">Sab</div>
+                      <div class="day-header">Dom</div>
 
-                <!-- Celle dei giorni -->
-                <div
-                  class="day-cell"
-                  *ngFor="let day of visibleMonth.days"
-                  [class.empty]="day.day === 0"
-                  [class.today]="isToday(day.date)"
-                  [class.has-entries]="day.hasEntries"
-                  (click)="openFormForDay(day)"
-                  [attr.title]="getDayTooltip(day)"
-                >
-                  <span class="day-number">{{ day.day }}</span>
-                  <span class="day-ore" *ngIf="day.ore > 0"> {{ day.ore.toFixed(1) }}h </span>
+                      <!-- Celle dei giorni -->
+                      @for (day of visibleMonth.days; track day.date) {
+                        <div
+                          class="day-cell"
+                          [class.empty]="day.day === 0"
+                          [class.today]="isToday(day.date)"
+                          [class.has-entries]="day.hasEntries"
+                          (click)="openFormForDay(day)"
+                          [attr.title]="getDayTooltip(day)"
+                        >
+                          <span class="day-number">{{ day.day }}</span>
+                          @if (day.ore > 0) {
+                            <span class="day-ore"> {{ day.ore.toFixed(1) }}h </span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <button
+                class="btn-nav"
+                (click)="nextMonth()"
+                [disabled]="currentMonthIndex >= calendarView.length - 1"
+                title="Mese successivo"
+              >
+                &#9654;
+              </button>
+            </div>
+
+            @if (oreLavorate.length === 0) {
+              <div class="empty">
+                Nessuna registrazione presente. Aggiungi la tua prima ora lavorata!
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Indicatori Carosello -->
+        @if (calendarView.length > 1) {
+          <div class="month-carousel-indicators">
+            @for (month of calendarView; track month.month + month.year; let i = $index) {
+              <span
+                class="month-indicator"
+                [class.active]="i === currentMonthIndex"
+                (click)="currentMonthIndex = i"
+                [title]="month.month + ' ' + month.year"
+              >
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Dettagli giorno -->
+    @if (selectedDayEntries.length > 0) {
+      <div class="day-details">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0">{{ selectedDayDate }}</h3>
+          <div class="day-details-actions">
+            <button class="btn btn-sm btn-primary" (click)="addOraForSelectedDay()">
+              + Aggiungi ore
+            </button>
+            <button class="btn btn-sm btn-secondary" (click)="closeDayDetails()">Chiudi</button>
+          </div>
+        </div>
+        <hr />
+        <div class="row day-entries">
+          @for (o of selectedDayEntries; track o.id) {
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <div class="badges">
+                    <span
+                      class="badge"
+                      [style.background]="
+                        getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))
+                      "
+                      [style.color]="'#e8f0fe'"
+                      [style.border]="
+                        '1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))
+                      "
+                      >{{ getClienteNomeDaProgetto(o.progettoId) }}</span
+                    >
+                    <span
+                      class="badge"
+                      [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))"
+                      [style.color]="'#e8f5e9'"
+                      [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))"
+                      >{{ getProgettoNome(o.progettoId) }}</span
+                    >
+                  </div>
+                  <div class="ore-amount">{{ o.ore }}h</div>
+                </div>
+                <div class="card-body">
+                  @if (o.descrizione) {
+                    <p><strong>Dettaglio:</strong> {{ o.descrizione }}</p>
+                  }
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-sm btn-edit" (click)="openEditForm(o)">Modifica</button>
+                  <button class="btn btn-sm btn-delete" (click)="delete(o.id)">Elimina</button>
                 </div>
               </div>
             </div>
-          </div>
-
-          <button
-            class="btn-nav"
-            (click)="nextMonth()"
-            [disabled]="currentMonthIndex >= calendarView.length - 1"
-            title="Mese successivo"
-          >
-            &#9654;
-          </button>
-        </div>
-
-        <div class="empty" *ngIf="oreLavorate.length === 0">
-          Nessuna registrazione presente. Aggiungi la tua prima ora lavorata!
+          }
         </div>
       </div>
-    </div>
-
-    <!-- Indicatori Carosello -->
-    <div class="month-carousel-indicators" *ngIf="calendarView.length > 1">
-      <span
-        *ngFor="let month of calendarView; let i = index"
-        class="month-indicator"
-        [class.active]="i === currentMonthIndex"
-        (click)="currentMonthIndex = i"
-        [title]="month.month + ' ' + month.year"
-      >
-      </span>
-    </div>
-  </div>
-
-  <!-- Dettagli giorno -->
-  <div class="day-details" *ngIf="selectedDayEntries.length > 0">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 class="mb-0">{{ selectedDayDate }}</h3>
-      <div class="day-details-actions">
-        <button class="btn btn-sm btn-primary" (click)="addOraForSelectedDay()">
-          + Aggiungi ore
-        </button>
-        <button class="btn btn-sm btn-secondary" (click)="closeDayDetails()">Chiudi</button>
-      </div>
-    </div>
-    <hr />
-    <div class="row day-entries">
-      <div class="col-12" *ngFor="let o of selectedDayEntries">
-        <div class="card">
-          <div class="card-header">
-            <div class="badges">
-              <span
-                class="badge"
-                [style.background]="getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))"
-                [style.color]="'#e8f0fe'"
-                [style.border]="
-                  '1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))
-                "
-                >{{ getClienteNomeDaProgetto(o.progettoId) }}</span
-              >
-              <span
-                class="badge"
-                [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))"
-                [style.color]="'#e8f5e9'"
-                [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))"
-                >{{ getProgettoNome(o.progettoId) }}</span
-              >
-            </div>
-            <div class="ore-amount">{{ o.ore }}h</div>
-          </div>
-          <div class="card-body">
-            <p *ngIf="o.descrizione"><strong>Dettaglio:</strong> {{ o.descrizione }}</p>
-          </div>
-          <div class="card-actions">
-            <button class="btn btn-sm btn-edit" (click)="openEditForm(o)">Modifica</button>
-            <button class="btn btn-sm btn-delete" (click)="delete(o.id)">Elimina</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    }
   </div>
 </div>

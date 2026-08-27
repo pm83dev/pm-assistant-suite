@@ -61,4 +61,68 @@ public class AuthController : ControllerBase
 
         return Ok(new LoginResponse(tokenString, expiresInMinutes * 60));
     }
+
+    [HttpPost("refresh")]
+    public ActionResult<LoginResponse> Refresh()
+    {
+        var currentToken = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        
+        if (string.IsNullOrEmpty(currentToken))
+        {
+            return Unauthorized(new { message = "Token non fornito." });
+        }
+
+        try
+        {
+            var jwtSection = _configuration.GetSection("Jwt");
+            var key = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key non configurata.");
+            const int expiresInMinutes = 480;
+
+            // Validazione del token attuale
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSection["Issuer"],
+                ValidAudience = jwtSection["Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+            };
+
+            var principal = tokenHandler.ValidateToken(currentToken, validationParameters, out _);
+            
+            if (!principal.Claims.Any(c => c.Type == ClaimTypes.Name))
+            {
+                return Unauthorized(new { message = "Token non valido." });
+            }
+
+            var username = principal.Claims.First(c => c.Type == ClaimTypes.Name).Value;
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, username),
+            };
+
+            var credentials = new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSection["Issuer"],
+                audience: jwtSection["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
+                signingCredentials: credentials);
+
+            var newTokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return Ok(new LoginResponse(newTokenString, expiresInMinutes * 60));
+        }
+        catch
+        {
+            return Unauthorized(new { message = "Token non valido o scaduto." });
+        }
+    }
 }

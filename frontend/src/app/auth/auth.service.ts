@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
 import { LoginResponse, User } from './auth.model';
 
 @Injectable({
@@ -22,6 +22,12 @@ export class AuthService {
           localStorage.setItem('authToken', res.token);
           this.currentUserSubject.next({ username, roles: ['user'] });
         }),
+        catchError((error) => {
+          // Rimuovi il token se la login fallisce
+          localStorage.removeItem('authToken');
+          this.currentUserSubject.next(null);
+          throw error;
+        })
       );
   }
 
@@ -36,5 +42,20 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return !!this.getToken();
+  }
+
+  refreshToken(): Observable<LoginResponse> {
+    const currentToken = this.getToken();
+    if (!currentToken) {
+      return throwError(() => new Error('No token to refresh'));
+    }
+
+    return this.http.post<LoginResponse>(`${this.apiOreTracking}/api/auth/refresh`, {}, {
+      headers: { Authorization: `Bearer ${currentToken}` }
+    }).pipe(
+      tap((res) => {
+        localStorage.setItem('authToken', res.token);
+      })
+    );
   }
 }
