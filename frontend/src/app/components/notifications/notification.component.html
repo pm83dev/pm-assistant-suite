@@ -1,0 +1,32 @@
+<div class="notification-container">
+  <div 
+    *ngFor="let notification of notifications$ | async" 
+    class="notification {{ getNotificationTypeClass(notification.type) }}"
+    [attr.data-notification-id]="notification.id">
+    
+    <div class="notification-header">
+      <span class="notification-title">{{ notification.title }}</span>
+      <span class="notification-time">{{ formatTimestamp(notification.timestamp) }}</span>
+      <button 
+        class="notification-close"
+        (click)="onRemove(notification.id)"
+        aria-label="Chiudi notifica">
+        ×
+      </button>
+    </div>
+    
+    <div class="notification-message">{{ notification.message }}</div>
+    
+    <!-- Dati aggiuntivi per tool results -->
+    <div *ngIf="notification.data" class="notification-data">
+      <pre>{{ notification.data | json }}</pre>
+    </div>
+  </div>
+
+  <button 
+    *ngIf="((notifications$ | async)?.length || 0) > 0"
+    class="clear-all-btn"
+    (click)="onClearAll()">
+    Pulisci tutto
+  </button>
+</div>

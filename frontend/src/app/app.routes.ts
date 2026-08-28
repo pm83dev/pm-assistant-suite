@@ -5,6 +5,7 @@ import { NoteComponent } from './pages/note/note.component';
 import { OreComponent } from './pages/ore/ore.component';
 import { ProgettiComponent } from './pages/progetti/progetti.component';
 import { LoginComponent } from './auth/login.component';
+import { ChatComponent } from './components/chat/chat.component';
 import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
@@ -33,6 +34,11 @@ export const routes: Routes = [
   {
     path: 'note',
     component: NoteComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'chat',
+    component: ChatComponent,
     canActivate: [authGuard]
   },
 ];

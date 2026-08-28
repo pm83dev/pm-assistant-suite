@@ -1,0 +1,109 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h3>AI Assistant</h3>
+    <button 
+      class="tools-toggle"
+      (click)="toggleTools()"
+      [class.active]="showTools">
+      🛠️ Tools {{showTools ? '(ON)' : '(OFF)'}}
+    </button>
+  </div>
+
+  <div class="chat-messages" #messagesContainer>
+    <div 
+      *ngFor="let message of messages; let isLast = last"
+      class="message"
+      [class.user-message]="message.role === 'user'"
+      [class.assistant-message]="message.role === 'assistant'">
+      
+      <div class="message-header">
+        <span class="role">{{message.role | uppercase}}</span>
+        <span class="timestamp">{{message.timestamp | date:'shortTime'}}</span>
+      </div>
+
+      <div class="message-content" [innerHTML]="message.content"></div>
+
+      <!-- Tool Calls -->
+      <div *ngIf="message.toolCalls && message.toolCalls.length > 0" class="tool-calls">
+        <div class="tool-call" *ngFor="let toolCall of message.toolCalls">
+          <div class="tool-header">
+            <strong>{{toolCall.toolName}}</strong>
+          </div>
+          <div class="tool-arguments">{{formatToolCall(toolCall)}}</div>
+          
+          <div class="tool-actions" *ngIf="!isLast">
+            <button 
+              class="execute-tool-btn"
+              (click)="executeTool(toolCall.toolName, toolCall.arguments)"
+              [disabled]="isLoading">
+              {{isLoading ? 'Processing...' : 'Execute'}}
+            </button>
+          </div>
+          
+          <div *ngIf="toolCall.result" class="tool-result">
+            <strong>Result:</strong>
+            <pre>{{toolCall.result}}</pre>
+          </div>
+          
+          <div *ngIf="toolCall.error" class="tool-error">
+            <strong>Error:</strong> {{toolCall.error}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading && isLast" class="typing-indicator">
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <!-- Error message -->
+      <div *ngIf="error" class="error-message">
+        {{error}}
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-container">
+    <form (ngSubmit)="sendMessage()" class="chat-form">
+      <textarea
+        name="message"
+        [(ngModel)]="currentMessage"
+        (ngModelChange)="error = null"
+        [disabled]="isLoading"
+        placeholder="Type your message here..."
+        rows="3"
+        class="chat-textarea"></textarea>
+      
+      <button 
+        type="submit"
+        [disabled]="!currentMessage.trim() || isLoading"
+        class="send-button">
+        {{isLoading ? 'Sending...' : 'Send'}}
+      </button>
+    </form>
+  </div>
+
+  <!-- Tools Panel -->
+  <div *ngIf="showTools" class="tools-panel">
+    <h4>Available Tools</h4>
+    <div class="tools-grid">
+      <div 
+        *ngFor="let tool of availableTools" 
+        class="tool-card"
+        [class.disabled]="isLoading">
+        <h5>{{tool.name}}</h5>
+        <p>{{tool.description}}</p>
+        <button 
+          (click)="executeTool(tool.name, '{}')"
+          [disabled]="isLoading"
+          class="tool-btn">
+          Use Tool
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

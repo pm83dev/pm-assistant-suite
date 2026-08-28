@@ -6,6 +6,7 @@ using LocalCodeAgent.Tools;
 using Microsoft.Extensions.Configuration;
 using PmAssistant.Services;
 using PmAssistant.Tools;
+using PmAssistant.Models.Dtos.Chat;
 
 /// <summary>
 /// Registro e dispatcher centralizzato per tutti i tool dell'agente.
@@ -105,6 +106,17 @@ public class ToolDispatcher
             "ore" => [.. _ore.Definitions],
             _ => []
         };
+
+    public Dictionary<string, ToolInfo> GetToolDefinitions() =>
+        AllDefinitions.ToDictionary(
+            t => t.Function.Name,
+            t => new ToolInfo
+            {
+                Name = t.Function.Name,
+                Description = t.Function.Description,
+                Parameters = JsonSerializer.Serialize(t.Function.Parameters),
+                IsAvailable = true
+            });
 
     public List<ToolDefinition> GetDefinitionsByName(string name) =>
         AllDefinitions.Where(t => t.Function.Name.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();

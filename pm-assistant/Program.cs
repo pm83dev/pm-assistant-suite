@@ -1,4 +1,5 @@
 using PmAssistant.Services;
+using PmAssistant.Services.Chat;
 using PmAssistant.Models.Dtos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -71,6 +72,11 @@ builder.Services.AddSingleton<IMonthlySummaryService, MonthlySummaryService>();
 builder.Services.AddSingleton<IGuideService, GuideService>();
 builder.Services.AddSingleton<IPdfParserService, PdfParserService>();
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
+
+// ── Chat Service ──────────────────────────────────────────────────────────────
+var chatSection = builder.Configuration.GetSection("Chat");
+builder.Services.Configure<ChatSettings>(chatSection);
+builder.Services.AddSingleton<IChatService, ChatService>();
 
 // ── Background Services ───────────────────────────────────────────────────────
 builder.Services.AddHostedService<SchedulerHostedService>();
