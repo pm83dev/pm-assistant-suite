@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Progetto } from '../../models/models';
+import { environment } from '../../../environments/index';
 
 
 @Injectable({
@@ -8,7 +9,7 @@ import { Progetto } from '../../models/models';
 })
 export class ProgettiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/time-tracking';
+  private readonly baseUrl = `${environment.apiOreTracking}/time-tracking`;
 
   getProgetti() {
       return this.http.get<Progetto[]>(`${this.baseUrl}/progetti`);

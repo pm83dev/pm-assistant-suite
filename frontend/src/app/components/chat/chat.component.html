@@ -1,12 +1,22 @@
 <div class="chat-container">
   <div class="chat-header">
     <h3>AI Assistant</h3>
-    <button 
-      class="tools-toggle"
-      (click)="toggleTools()"
-      [class.active]="showTools">
-      🛠️ Tools {{showTools ? '(ON)' : '(OFF)'}}
-    </button>
+    <div class="header-actions">
+      <button
+        class="reset-button"
+        type="button"
+        (click)="resetChat()"
+        [disabled]="isLoading || messages.length === 0"
+        title="Cancella la conversazione">
+        🗑️ Reset
+      </button>
+      <button
+        class="tools-toggle"
+        (click)="toggleTools()"
+        [class.active]="showTools">
+        🛠️ Tools {{showTools ? '(ON)' : '(OFF)'}}
+      </button>
+    </div>
   </div>
 
   <div class="chat-messages" #messagesContainer>

@@ -1,13 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { OraLavorata, TotaleOre } from '../../models/models';
+import { environment } from '../../../environments/index';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OreService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/time-tracking';
+  private readonly baseUrl = `${environment.apiOreTracking}/time-tracking`;
 
   getOreLavorate() {
     return this.http.get<OraLavorata[]>(`${this.baseUrl}/ore`);

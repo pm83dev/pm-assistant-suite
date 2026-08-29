@@ -24,6 +24,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   availableTools: any[] = [];
 
   ngOnInit(): void {
+    this.loadLocalChatHistory();
     this.loadChatHistory();
     this.loadAvailableTools();
   }
@@ -45,6 +46,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     };
 
     this.messages.push(userMessage);
+    this.chatService.addToChatHistory(userMessage);
     this.currentMessage = '';
     this.isLoading = true;
     this.error = null;
@@ -61,6 +63,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           };
 
           this.messages.push(assistantMessage);
+          this.chatService.addToChatHistory(assistantMessage);
           this.isLoading = false;
 
           if (response.toolCalls && response.toolCalls.length > 0) {
@@ -75,12 +78,23 @@ export class ChatComponent implements OnInit, OnDestroy {
       });
   }
 
+  loadLocalChatHistory(): void {
+    // Carica i messaggi locali se presenti
+    const localMessages = this.chatService.getChatHistoryFromStorage();
+    if (localMessages && localMessages.length > 0) {
+      this.messages = localMessages;
+    }
+  }
+
   loadChatHistory(): void {
     this.chatService.getChatHistory()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (history) => {
-          this.messages = history;
+          // Solo se non ci sono messaggi locali o se il backend restituisce una cronologia vuota
+          if (!this.messages || this.messages.length === 0) {
+            this.messages = history;
+          }
         },
         error: (err) => {
           console.error('Error loading chat history:', err);
@@ -115,6 +129,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.content = result.content;
             lastMessage.toolCalls = result.toolCalls;
+            this.chatService.updateChatHistory(this.messages);
           }
           this.isLoading = false;
         },
@@ -128,6 +143,12 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   toggleTools(): void {
     this.showTools = !this.showTools;
+  }
+
+  resetChat(): void {
+    this.messages = [];
+    this.error = null;
+    this.chatService.clearChatHistory();
   }
 
   formatToolCall(toolCall: ToolCall): string {

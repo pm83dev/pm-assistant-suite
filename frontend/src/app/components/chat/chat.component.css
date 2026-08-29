@@ -24,6 +24,11 @@
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .tools-toggle {
   background: #34495e;
   border: none;
@@ -41,6 +46,26 @@
 
 .tools-toggle.active {
   background: #27ae60;
+}
+
+.reset-button {
+  background: #34495e;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.reset-button:hover:not(:disabled) {
+  background: #e74c3c;
+}
+
+.reset-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .chat-messages {

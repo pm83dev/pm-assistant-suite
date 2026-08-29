@@ -29,9 +29,11 @@ public class TelegramBotService : ITelegramBotService
     private readonly IGoogleSheetsService _sheetsService;
     private readonly IAssistantAgentService _agent;
     private readonly ILogger<TelegramBotService> _logger;
+    private readonly PmAssistant.Tools.OreTrackingTools _oreTools;
 
     public TelegramBotService(IOptions<TelegramSettings> settings, ILlmService llmService,
-        IGoogleSheetsService sheetsService, IAssistantAgentService agent, ILogger<TelegramBotService> logger)
+        IGoogleSheetsService sheetsService, IAssistantAgentService agent, ILogger<TelegramBotService> logger,
+        string? oreTrackingBaseUrl = null)
     {
         _logger = logger;
 
@@ -50,6 +52,8 @@ public class TelegramBotService : ITelegramBotService
         _llmService = llmService;
         _sheetsService = sheetsService;
         _agent = agent;
+        var baseUrl = string.IsNullOrWhiteSpace(oreTrackingBaseUrl) ? "http://localhost:5108" : oreTrackingBaseUrl.TrimEnd('/');
+        _oreTools = new PmAssistant.Tools.OreTrackingTools(baseUrl);
     }
 
     public async Task StartPollingAsync(CancellationToken cancellationToken = default)
@@ -400,20 +404,75 @@ public class TelegramBotService : ITelegramBotService
     {
         try
         {
-            var rows = await _sheetsService.ReadRowsAsync("DailyLogs");
+            // Legge le ore dall'API ore-tracking (database SQLite)
+            var start = new DateTime(year, month, 1);
+            var end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+            var rangeArgs = System.Text.Json.JsonSerializer.Serialize(new {
+                da = start.ToString("yyyy-MM-dd"),
+                a = end.ToString("yyyy-MM-dd")
+            });
+            var jsonContent = await _oreTools.ExecuteAsync("ore_list_ore_range", rangeArgs);
+
             var lines = new List<string>();
             decimal totalHours = 0;
-            foreach (var row in rows.Skip(1))
-            {
-                if (row.Count < 5 || !DateTime.TryParse(row[1]?.ToString(), out var date))
-                    continue;
-                if (date.Year != year || date.Month != month)
-                    continue;
 
-                decimal.TryParse(row[4]?.ToString(), out var hours);
-                totalHours += hours;
-                var description = row.Count > 5 ? row[5]?.ToString() : "";
-                lines.Add($"{date:dd/MM} - {row[2]} - {hours}h {description}".TrimEnd());
+            if (!jsonContent.StartsWith("ERRORE", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrEmpty(jsonContent))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(jsonContent);
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var ore in doc.RootElement.EnumerateArray())
+                    {
+                        if (!ore.TryGetProperty("data", out var dataProp) ||
+                            !DateTime.TryParse(dataProp.GetString(), out var date))
+                            continue;
+                        if (date.Year != year || date.Month != month)
+                            continue;
+
+                        decimal hours = 0;
+                        if (ore.TryGetProperty("ore", out var oreProp) &&
+                            oreProp.ValueKind == System.Text.Json.JsonValueKind.Number)
+                            hours = oreProp.GetDecimal();
+
+                        totalHours += hours;
+
+                        string projectName = "N/D";
+                        if (ore.TryGetProperty("progettoId", out var pidProp) &&
+                            pidProp.TryGetInt32(out var pid) && pid > 0)
+                        {
+                            if (ore.TryGetProperty("progetto", out var progettoProp) &&
+                                progettoProp.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                                progettoProp.TryGetProperty("nome", out var nomeProp))
+                            {
+                                projectName = nomeProp.GetString() ?? "N/D";
+                            }
+                        }
+
+                        var description = ore.TryGetProperty("descrizione", out var descProp)
+                            ? descProp.GetString() ?? "" : "";
+
+                        lines.Add($"{date:dd/MM} - {projectName} - {hours}h {description}".TrimEnd());
+                    }
+                }
+            }
+            else
+            {
+                // Fallback a Google Sheets se API non disponibile
+                _logger.LogWarning("API ore-tracking non disponibile, fallback a Google Sheets. Errore: {Error}", jsonContent);
+                var rows = await _sheetsService.ReadRowsAsync("DailyLogs");
+                foreach (var row in rows.Skip(1))
+                {
+                    if (row.Count < 5 || !DateTime.TryParse(row[1]?.ToString(), out var date))
+                        continue;
+                    if (date.Year != year || date.Month != month)
+                        continue;
+
+                    decimal.TryParse(row[4]?.ToString(), out var hours);
+                    totalHours += hours;
+                    var description = row.Count > 5 ? row[5]?.ToString() : "";
+                    lines.Add($"{date:dd/MM} - {row[2]} - {hours}h {description}".TrimEnd());
+                }
             }
 
             if (lines.Count == 0)

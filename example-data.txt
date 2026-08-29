@@ -1,0 +1,11 @@
+Client Name: Acme Corp
+Email: contact@acme.com
+Phone: +1-555-0123
+
+Client Name: Beta Ltd
+Email: info@beta.com
+Phone: +1-555-0456
+
+Client Name: Gamma Inc
+Email: support@gamma.com
+Phone: +1-555-0789

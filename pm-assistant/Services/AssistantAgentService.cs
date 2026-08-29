@@ -302,50 +302,84 @@ public class AssistantAgentService : IAssistantAgentService
 
     private async Task<string> GetDailyLogsAsync(int year, int month)
     {
-        // Usa OreTrackingTools per leggere le ore da ore-tracking/Api
+        // Legge le ore da ore-tracking/Api (database SQLite)
         try
         {
-            // Prima estraggo i progetti per mappare gli ID
+            // Estraggo i progetti per mappare ID → nome e cliente
             var projectsResult = await _toolDispatcher.ExecuteAsync("ore_list_progetti", "{}");
+            var projectsJson = JsonDocument.Parse(projectsResult);
+            var projects = projectsJson.RootElement;
+            var projectMap = new Dictionary<int, (string nome, string cliente)>();
+            if (projects.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var p in projects.EnumerateArray())
+                {
+                    if (p.TryGetProperty("id", out var idProp) && idProp.TryGetInt32(out var id) &&
+                        p.TryGetProperty("nome", out var nomeProp))
+                    {
+                        string clienteNome = "";
+                        if (p.TryGetProperty("cliente", out var clienteProp) &&
+                            clienteProp.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                            clienteProp.TryGetProperty("nome", out var cnProp))
+                            clienteNome = cnProp.GetString() ?? "";
+                        projectMap[id] = (nomeProp.GetString() ?? "", clienteNome);
+                    }
+                }
+            }
 
-            // Poi estraggo le ore lavorate
-            var hoursResult = await _toolDispatcher.ExecuteAsync("ore_list_ore", "{}");
+            // Estraggo le ore lavorate per il mese
+            var start = new DateTime(year, month, 1);
+            var end = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+            var rangeParams = System.Text.Json.JsonSerializer.Serialize(new { da = start.ToString("yyyy-MM-dd"), a = end.ToString("yyyy-MM-dd") });
+            var hoursResult = await _toolDispatcher.ExecuteAsync("ore_list_ore_range", rangeParams);
+            var oreJson = JsonDocument.Parse(hoursResult);
+            var oreRows = oreJson.RootElement;
 
-            // Parse e riorganizza i dati (per ora fallback a Google Sheets se API non disponibile)
             var entries = new List<object>();
             decimal total = 0;
             var byProject = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
             var byClient = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
-            // TODO: Implementare parsing dei risultati da ore-tracking/Api
-            // Per ora fallback a Google Sheets (metodo legacy)
-            var rows = await _sheets.ReadRowsAsync("DailyLogs");
-
-            foreach (var row in rows.Skip(1))
+            if (oreRows.ValueKind == System.Text.Json.JsonValueKind.Array)
             {
-                if (row.Count < 5 || !DateTime.TryParse(row[1]?.ToString(), out var date))
-                    continue;
-                if (date.Year != year || date.Month != month)
-                    continue;
-
-                decimal.TryParse(row[4]?.ToString(), out var hours);
-                var client = row[2]?.ToString() ?? "";
-                var project = row.Count > 3 ? row[3]?.ToString() ?? "" : "";
-
-                total += hours;
-                if (!string.IsNullOrWhiteSpace(project))
-                    byProject[project] = byProject.GetValueOrDefault(project) + hours;
-                if (!string.IsNullOrWhiteSpace(client))
-                    byClient[client] = byClient.GetValueOrDefault(client) + hours;
-
-                entries.Add(new
+                foreach (var o in oreRows.EnumerateArray())
                 {
-                    data = date.ToString("yyyy-MM-dd"),
-                    cliente = client,
-                    progetto = project,
-                    ore = hours,
-                    descrizione = row.Count > 5 ? row[5]?.ToString() ?? "" : ""
-                });
+                    if (!o.TryGetProperty("data", out var dataProp) || !DateTime.TryParse(dataProp.GetString(), out var date))
+                        continue;
+                    if (date.Year != year || date.Month != month)
+                        continue;
+
+                    decimal hours = 0;
+                    if (o.TryGetProperty("ore", out var oreProp) && oreProp.ValueKind == System.Text.Json.JsonValueKind.Number)
+                        hours = oreProp.GetDecimal();
+
+                    int progettoId = 0;
+                    if (o.TryGetProperty("progettoId", out var pidProp))
+                        progettoId = pidProp.TryGetInt32(out var pid) ? pid : 0;
+
+                    var (projectName, clientName) = progettoId > 0 && projectMap.TryGetValue(progettoId, out var pm)
+                        ? pm
+                        : ("N/D", "N/D");
+
+                    var descrizione = o.TryGetProperty("descrizione", out var descProp)
+                        ? descProp.GetString() ?? ""
+                        : "";
+
+                    total += hours;
+                    if (!string.IsNullOrWhiteSpace(projectName))
+                        byProject[projectName] = byProject.GetValueOrDefault(projectName) + hours;
+                    if (!string.IsNullOrWhiteSpace(clientName))
+                        byClient[clientName] = byClient.GetValueOrDefault(clientName) + hours;
+
+                    entries.Add(new
+                    {
+                        data = date.ToString("yyyy-MM-dd"),
+                        cliente = clientName,
+                        progetto = projectName,
+                        ore = hours,
+                        descrizione = descrizione
+                    });
+                }
             }
 
             return JsonSerializer.Serialize(new
@@ -492,12 +526,48 @@ public class AssistantAgentService : IAssistantAgentService
         var written = 0;
         try
         {
+            // Risolvo i nomi progetto in ID chiamando l'API una sola volta
+            var projectsResult = await _toolDispatcher.ExecuteAsync("ore_list_progetti", "{}");
+            var projectsJson = JsonDocument.Parse(projectsResult);
+            var progetti = projectsJson.RootElement;
+            var nameToId = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (progetti.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var p in progetti.EnumerateArray())
+                {
+                    if (p.TryGetProperty("nome", out var nomeProp))
+                    {
+                        var nome = nomeProp.GetString() ?? "";
+                        if (!string.IsNullOrWhiteSpace(nome))
+                            nameToId[nome] = p.TryGetProperty("id", out var idProp) && idProp.TryGetInt32(out var id) ? id : 0;
+                    }
+                }
+            }
+
             foreach (var e in pending)
             {
-                var id = Guid.NewGuid().ToString("N")[..8];
-                await _sheets.AppendRowsAsync("DailyLogs",
-                    id, e.Date.ToString("yyyy-MM-dd"), e.Client, e.Project, e.Hours,
-                    e.Description, DateTime.UtcNow.ToString("o"));
+                // Cerco l'ID del progetto per nome
+                int progettoId = 0;
+                if (!string.IsNullOrWhiteSpace(e.Project) && nameToId.TryGetValue(e.Project, out var pid))
+                    progettoId = pid;
+                else if (!string.IsNullOrWhiteSpace(e.Project))
+                    _logger.LogWarning("Progetto '{Project}' non trovato nell'API ore-tracking", e.Project);
+
+                if (progettoId == 0)
+                {
+                    _logger.LogError("Impossibile registrare: progetto non trovato per '{Project}'", e.Project);
+                    _pending[sessionId] = pending.Skip(written).ToList();
+                    return $"Errore: progetto '{e.Project}' non trovato nel database ore-tracking. " +
+                        "Verifica che il progetto esista (usa /log per crearlo o controlla il nome).";
+                }
+
+                var logParams = System.Text.Json.JsonSerializer.Serialize(new {
+                    progetto_id = progettoId,
+                    ore = e.Hours,
+                    descrizione = e.Description,
+                    data = e.Date.ToString("yyyy-MM-dd")
+                });
+                await _toolDispatcher.ExecuteAsync("ore_log_ora", logParams);
                 written++;
             }
         }

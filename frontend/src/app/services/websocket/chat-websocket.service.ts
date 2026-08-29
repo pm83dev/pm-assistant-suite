@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { ChatMessage, ToolCall } from '../../models/models';
+import { environment } from '../../../environments/index';
 
 export interface WebSocketMessage {
   type: 'message' | 'tool-result' | 'tool-call' | 'error' | 'connection-status';
@@ -21,6 +22,10 @@ export class ChatWebSocketService {
 
   private messageSubject = new Subject<WebSocketMessage>();
   public message$ = this.messageSubject.asObservable();
+
+  private get wsEndpoint(): string {
+    return environment.wsUrl || 'ws://localhost:5000';
+  }
 
   constructor() {
     this.connect();

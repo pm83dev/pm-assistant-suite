@@ -30,8 +30,20 @@ builder.Services.AddSingleton<IGoogleSheetsService, GoogleSheetsService>();
 // ── Telegram Settings ─────────────────────────────────────────────────────────
 var telegramSection = builder.Configuration.GetSection("Telegram");
 builder.Services.Configure<TelegramSettings>(telegramSection);
+
+// Ore Tracking base URL
+var oreTrackingBaseUrl = builder.Configuration["OreTracking:BaseUrl"] ?? "http://localhost:5108";
+
 builder.Services.AddSingleton<IAssistantAgentService, AssistantAgentService>();
-builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>();
+builder.Services.AddSingleton<ITelegramBotService, TelegramBotService>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<TelegramBotService>>();
+    var settings = sp.GetRequiredService<IOptions<TelegramSettings>>();
+    var llmService = sp.GetRequiredService<ILlmService>();
+    var sheetsService = sp.GetRequiredService<IGoogleSheetsService>();
+    var agent = sp.GetRequiredService<IAssistantAgentService>();
+    return new TelegramBotService(settings, llmService, sheetsService, agent, logger, oreTrackingBaseUrl);
+});
 builder.Services.AddHttpClient();
 
 // ── Guide Settings ────────────────────────────────────────────────────────────
@@ -74,8 +86,6 @@ builder.Services.AddSingleton<IPdfParserService, PdfParserService>();
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
 
 // ── Chat Service ──────────────────────────────────────────────────────────────
-var chatSection = builder.Configuration.GetSection("Chat");
-builder.Services.Configure<ChatSettings>(chatSection);
 builder.Services.AddSingleton<IChatService, ChatService>();
 
 // ── Background Services ───────────────────────────────────────────────────────
@@ -157,7 +167,6 @@ app.UseAuthorization();
 
 app.UseCors("FrontendCors");
 
-app.UseHttpsRedirection();
 app.MapControllers();
 
 // ── Guide API Endpoints ───────────────────────────────────────────────────────

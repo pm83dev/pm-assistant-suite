@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
 import { LoginResponse, User } from './auth.model';
+import { environment } from '../../environments/index';
 
 @Injectable({
   providedIn: 'root',
@@ -11,8 +12,8 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  private readonly apiOreTracking = '';
-  private readonly apiPmAssistant = 'http://localhost:5000';
+  private readonly apiOreTracking = environment.apiOreTracking;
+  private readonly apiPmAssistant = environment.apiPmAssistant;
 
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http

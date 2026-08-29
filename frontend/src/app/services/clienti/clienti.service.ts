@@ -1,13 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Cliente } from '../../models/models';
+import { environment } from '../../../environments/index';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ClientiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/time-tracking';
+  private readonly baseUrl = `${environment.apiOreTracking}/time-tracking`;
 
    getClient() {
       return this.http.get<Cliente[]>(`${this.baseUrl}/clienti`);
