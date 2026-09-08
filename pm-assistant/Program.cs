@@ -162,10 +162,10 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+app.UseCors("FrontendCors");
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseCors("FrontendCors");
 
 app.MapControllers();
 

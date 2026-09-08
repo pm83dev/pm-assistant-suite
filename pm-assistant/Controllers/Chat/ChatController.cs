@@ -8,7 +8,6 @@ namespace PmAssistant.Controllers.Chat;
 
 [ApiController]
 [Route("api/chat")]
-[Authorize]
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;

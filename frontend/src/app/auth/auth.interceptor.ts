@@ -37,13 +37,11 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next): Observable<HttpEv
             });
             return next(newReq);
           }),
-          catchError((refreshError: any): Observable<UrlTree> => {
+          catchError((refreshError: any) => {
             // Se il refresh fallisce, logout e redirect a login
             authService.logout();
-            return new Observable<UrlTree>(observer => {
-              observer.next(router.parseUrl('/login'));
-              observer.complete();
-            });
+            router.navigate(['/login']);
+            return throwError(() => refreshError);
           }),
           finalize(() => {
             tokenRefreshed = false;

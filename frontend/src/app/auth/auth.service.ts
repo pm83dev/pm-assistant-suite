@@ -17,7 +17,7 @@ export class AuthService {
 
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiOreTracking}/api/auth/login`, { username, password })
+      .post<LoginResponse>(`${this.apiOreTracking}/auth/login`, { username, password })
       .pipe(
         tap((res) => {
           localStorage.setItem('authToken', res.token);
@@ -51,7 +51,7 @@ export class AuthService {
       return throwError(() => new Error('No token to refresh'));
     }
 
-    return this.http.post<LoginResponse>(`${this.apiOreTracking}/api/auth/refresh`, {}, {
+    return this.http.post<LoginResponse>(`${this.apiOreTracking}/auth/refresh`, {}, {
       headers: { Authorization: `Bearer ${currentToken}` }
     }).pipe(
       tap((res) => {
