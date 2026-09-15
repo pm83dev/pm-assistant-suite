@@ -73,7 +73,8 @@ builder.Services.AddSingleton<ToolDispatcher>(sp =>
         googleSearchApiKey: searchSection["ApiKey"],
         googleSearchCx: searchSection["Cx"],
         sheetsService: sp.GetService<IGoogleSheetsService>(),
-        oreTrackingBaseUrl: timeTrackingSection["BaseUrl"]));
+        oreTrackingBaseUrl: timeTrackingSection["BaseUrl"],
+        llmService: sp.GetService<ILlmService>()));
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<IGraphAuthService, GraphAuthService>();

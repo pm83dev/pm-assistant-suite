@@ -1,20 +1,25 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
+import { ChatMessage, ToolCall } from '../../models/models';
 import { ChatService } from '../../services/chat/chat.service';
-import { ChatMessage, ChatResponse, ToolCall } from '../../models/models';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.css']
+  styleUrls: ['./chat.component.css'],
 })
 export class ChatComponent implements OnInit, OnDestroy {
   private chatService = inject(ChatService);
+  private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
+
+  // Debug: contatore per tracciare i messaggi caricati
+  private messageLoadCount = 0;
+  private lastKnownMessagesLength = 0;
 
   messages: ChatMessage[] = [];
   currentMessage = '';
@@ -27,6 +32,16 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.loadLocalChatHistory();
     this.loadChatHistory();
     this.loadAvailableTools();
+
+    // Debug: monitora il caricamento dei messaggi
+    setInterval(() => {
+      if (this.messages.length !== this.lastKnownMessagesLength) {
+        console.log(
+          `[DEBUG] Messaggi caricati: ${this.messages.length} (variazione: ${this.messages.length - this.lastKnownMessagesLength})`,
+        );
+        this.lastKnownMessagesLength = this.messages.length;
+      }
+    }, 1000);
   }
 
   ngOnDestroy(): void {
@@ -42,7 +57,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const userMessage: ChatMessage = {
       role: 'user',
       content: messageText,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.messages.push(userMessage);
@@ -51,16 +66,39 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.chatService.sendMessage(messageText)
+    // Aggiungi timeout di 30 secondi per prevenire caricamento infinito
+    const timeout = setTimeout(() => {
+      if (this.isLoading) {
+        console.warn('Richiesta chat superata il timeout di 30 secondi');
+        this.error = 'La richiesta è scaduta. Prova a ridurre la lunghezza del messaggio.';
+        this.isLoading = false;
+      }
+    }, 30000);
+
+    this.chatService
+      .sendMessage(messageText)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          clearTimeout(timeout);
+
+          // Debug: verifica che il contenuto non sia vuoto o problematico
+          if (!response.content || response.content.trim() === '') {
+            console.warn('[DEBUG] Risposta vuota dal server', response);
+            // Se la risposta è vuota, non aggiungere nulla e termina il caricamento
+            this.isLoading = false;
+            return;
+          }
+
           const assistantMessage: ChatMessage = {
             role: 'assistant',
             content: response.content,
             timestamp: new Date(),
-            toolCalls: response.toolCalls
+            toolCalls: response.toolCalls || [],
           };
+
+          this.isLoading = false;
+          this.cdr.detectChanges();
 
           this.messages.push(assistantMessage);
           this.chatService.addToChatHistory(assistantMessage);
@@ -68,13 +106,16 @@ export class ChatComponent implements OnInit, OnDestroy {
 
           if (response.toolCalls && response.toolCalls.length > 0) {
             this.showTools = true;
+          } else {
+            this.showTools = false;
           }
         },
         error: (err) => {
-          this.error = 'Errore nell\'invio del messaggio';
+          clearTimeout(timeout);
+          this.error = "Errore nell'invio del messaggio";
           this.isLoading = false;
           console.error('Chat error:', err);
-        }
+        },
       });
   }
 
@@ -87,7 +128,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   loadChatHistory(): void {
-    this.chatService.getChatHistory()
+    this.chatService
+      .getChatHistory()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (history) => {
@@ -98,29 +140,31 @@ export class ChatComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error loading chat history:', err);
-        }
+        },
       });
   }
 
   loadAvailableTools(): void {
-    this.chatService.getAvailableTools()
+    this.chatService
+      .getAvailableTools()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (tools) => {
           this.availableTools = Object.entries(tools).map(([name, info]) => ({
             name,
-            ...info
+            ...info,
           }));
         },
         error: (err) => {
           console.error('Error loading tools:', err);
-        }
+        },
       });
   }
 
   executeTool(toolName: string, toolArguments: string): void {
     this.isLoading = true;
-    this.chatService.executeTool(toolName, toolArguments)
+    this.chatService
+      .executeTool(toolName, toolArguments)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
@@ -134,10 +178,10 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         },
         error: (err) => {
-          this.error = 'Errore nell\'esecuzione del tool';
+          this.error = "Errore nell'esecuzione del tool";
           this.isLoading = false;
           console.error('Tool execution error:', err);
-        }
+        },
       });
   }
 

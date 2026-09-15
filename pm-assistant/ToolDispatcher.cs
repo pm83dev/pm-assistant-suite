@@ -4,6 +4,7 @@ using LocalCodeAgent.Core;
 using LocalCodeAgent.Models;
 using LocalCodeAgent.Tools;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using PmAssistant.Services;
 using PmAssistant.Tools;
 using PmAssistant.Models.Dtos.Chat;
@@ -22,13 +23,14 @@ public class ToolDispatcher
     private readonly GoogleSheetsTools _sheets;
     private readonly WordDocTools _worddoc;
     private readonly OreTrackingTools _ore;
+    private readonly NL2SQLTools _nl2sql;
 
     // Cache read_file: path → contenuto già letto (soft-block su duplicati)
     private readonly Dictionary<string, string> _fileCache =
         new(StringComparer.OrdinalIgnoreCase);
 
 
-    public ToolDispatcher(WorkspaceContext workspace, string? googleSearchApiKey = null, string? googleSearchCx = null, IGoogleSheetsService? sheetsService = null, string? oreTrackingBaseUrl = null)
+    public ToolDispatcher(WorkspaceContext workspace, string? googleSearchApiKey = null, string? googleSearchCx = null, IGoogleSheetsService? sheetsService = null, string? oreTrackingBaseUrl = null, ILlmService? llmService = null)
     {
         _fs = new FileSystemTools(workspace);
         _terminal = new TerminalTools(workspace);
@@ -43,6 +45,9 @@ public class ToolDispatcher
             : CreateOfflineGoogleSheetsTools();
 
         _worddoc = new WordDocTools(workspace);
+        _nl2sql = new NL2SQLTools(
+            string.IsNullOrWhiteSpace(oreTrackingBaseUrl) ? "http://localhost:5108" : oreTrackingBaseUrl,
+            llmService ?? new LlmService(new HttpClient(), Options.Create(new LlmSettings { BaseUrl = "http://localhost:8080", ModelName = "llama" })));
     }
 
     private static GoogleSheetsTools CreateGoogleSheetsTools(IGoogleSheetsService sheetsService)
@@ -91,7 +96,8 @@ public class ToolDispatcher
         .._web.Definitions,
         .._sheets.Definitions,
         .._worddoc.Definitions,
-        .._ore.Definitions
+        .._ore.Definitions,
+        .._nl2sql.Definitions
     ];
 
     public List<ToolDefinition> GetDefinitionsByCategory(string category) =>
@@ -176,6 +182,10 @@ public class ToolDispatcher
         // Ore tracking — su task che richiedono ore/clienti/progetti/note del time-tracking
         if (Has(lc, "ora", "ore", "cliente", "clienti", "progetto", "progetti", "fattur", "nota", "note lavorate", "time tracking", "time-tracking"))
             defs.AddRange(_ore.Definitions);
+
+        // NL2SQL — su task che richiedono interrogazione database (tabelle, query, schema)
+        if (Has(lc, "tabell", "database", "sql", "query", "schema", "colonna", "colonne", "elenco", "contenuto", "riga"))
+            defs.AddRange(_nl2sql.Definitions);
 
         return [.. defs.DistinctBy(t => t.Function.Name)];
     }
@@ -270,6 +280,10 @@ public class ToolDispatcher
         if (toolName.StartsWith("ore_"))
             return _ore.Execute(toolName, argumentsJson);
 
+        // NL2SQL query
+        if (toolName == "ore_query_nl2sql" || toolName is "list_tables" or "run_query" or "describe_table")
+            return _nl2sql.Execute(toolName, argumentsJson);
+
         return $"Tool '{toolName}' non registrato nel dispatcher.";
     }
 
@@ -279,6 +293,10 @@ public class ToolDispatcher
         // Ore tracking (ore-tracking/Api via HTTP) - unico tool con metodi asincroni al momento
         if (toolName.StartsWith("ore_"))
             return await _ore.ExecuteAsync(toolName, argumentsJson);
+
+        // NL2SQL query (legacy, ora non più usato)
+        if (toolName == "ore_query_nl2sql" || toolName is "list_tables" or "run_query" or "describe_table")
+            return await _nl2sql.ExecuteAsync(toolName, argumentsJson);
 
         // Fallback: esegui sincrono
         return Execute(toolName, argumentsJson);

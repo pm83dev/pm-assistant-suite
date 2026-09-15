@@ -36,7 +36,7 @@ export class ChatWebSocketService {
       // TODO: Implementare la connessione WebSocket reale
       // Per ora usiamo un placeholder
       console.log('Connecting to WebSocket...');
-      
+
       // Simuliamo una connessione WebSocket per lo sviluppo
       this.simulateConnection();
     } catch (error) {
@@ -48,15 +48,16 @@ export class ChatWebSocketService {
   private simulateConnection(): void {
     // Simula una connessione WebSocket per lo sviluppo
     // In produzione, sostituire con la reale connessione WebSocket
-    
+
     setTimeout(() => {
       this.isConnected.next(true);
       console.log('WebSocket connected (simulated)');
-      
+
       // Simula ricezione di messaggi
       this.simulateMessageReception();
     }, 1000);
   }
+
 
   private simulateMessageReception(): void {
     // Simula la ricezione di messaggi dal server
@@ -104,15 +105,15 @@ export class ChatWebSocketService {
 
   private handleConnectionError(): void {
     this.isConnected.next(false);
-    
+
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       console.log(`Riconnessione in ${this.reconnectDelay / 1000} secondi...`);
-      
+
       setTimeout(() => {
         this.reconnectAttempts++;
         this.connect();
       }, this.reconnectDelay);
-      
+
       this.reconnectDelay *= 2; // Esponenziale backoff
     } else {
       console.error('Max reconnect attempts reached');
@@ -137,7 +138,7 @@ export class ChatWebSocketService {
       },
       timestamp: new Date()
     };
-    
+
     this.sendMessage(message);
   }
 
