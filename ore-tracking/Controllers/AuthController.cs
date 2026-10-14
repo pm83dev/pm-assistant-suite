@@ -62,11 +62,21 @@ public class AuthController : ControllerBase
         return Ok(new LoginResponse(tokenString, expiresInMinutes * 60));
     }
 
+    //Endpoint per il logout 
+    [HttpPost("logout")]
+    public ActionResult Logout()
+    {
+        // Implementa la logica di logout, ad esempio cancellando le credenziali o invalidando il token
+        return Ok(new { message = "Logout effettuato con successo." });
+    }
+
+
+    // Endpoint per il refresh del token 
     [HttpPost("refresh")]
     public ActionResult<LoginResponse> Refresh()
     {
         var currentToken = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-        
+
         if (string.IsNullOrEmpty(currentToken))
         {
             return Unauthorized(new { message = "Token non fornito." });
@@ -92,7 +102,7 @@ public class AuthController : ControllerBase
             };
 
             var principal = tokenHandler.ValidateToken(currentToken, validationParameters, out _);
-            
+
             if (!principal.Claims.Any(c => c.Type == ClaimTypes.Name))
             {
                 return Unauthorized(new { message = "Token non valido." });
@@ -125,4 +135,6 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Token non valido o scaduto." });
         }
     }
+
+
 }

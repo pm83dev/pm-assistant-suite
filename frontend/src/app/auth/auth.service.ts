@@ -42,7 +42,22 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+
+    // Verifica la scadenza del JWT (claim "exp") per non considerare autenticato
+    // un utente con token scaduto in localStorage.
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (payload.exp && Date.now() >= payload.exp * 1000) {
+        return false;
+      }
+    } catch {
+      // Token non decodificabile: si considera non valido.
+      return false;
+    }
+
+    return true;
   }
 
   refreshToken(): Observable<LoginResponse> {

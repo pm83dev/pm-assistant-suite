@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.vscode/launch.json','utf8'\\)\\); console.log\\('OK'\\)\")",
+      "Bash(node -e \"require\\('fs'\\).readFileSync\\('.vscode/launch.json'\\)\")",
+      "Bash(git add *)"
+    ]
+  }
+}
