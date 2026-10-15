@@ -10,6 +10,7 @@ import { DashboardManagementService } from '../../services/dashboard/dashboard-m
 })
 export class DashboardComponent {
   dashboard = inject(DashboardManagementService);
+  loading = false;
 
   constructor() {
     effect(() => {
@@ -19,6 +20,7 @@ export class DashboardComponent {
       this.dashboard.oreUltimoMese();
       this.dashboard.meseCorrente();
       this.dashboard.progettiConTotali();
+      this.loading = this.dashboard.loading();
     });
   }
 

@@ -31,8 +31,11 @@ export class ProgettiComponent {
     effect(() => {
       this.progetti = this.projManagementService.progetti();
       this.clienti = this.projManagementService.clienti();
+      this.loading = this.projManagementService.loading();
     });
   }
+
+  loading = false;
 
   openNewForm(): void {
     this.editMode = false;

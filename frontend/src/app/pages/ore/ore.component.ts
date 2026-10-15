@@ -53,6 +53,7 @@ export class OreComponent {
 
   private oreManagementService = inject(OreManagementService);
   private calendarInitialized = false;
+  loading = false;
 
   constructor() {
     // Tiene sincronizzati i dati locali con lo stato del servizio, che si aggiorna
@@ -62,6 +63,7 @@ export class OreComponent {
       this.progetti = this.oreManagementService.progetti();
       this.clienti = this.oreManagementService.clienti();
       this.calendarView = this.oreManagementService.calendarView();
+      this.loading = this.oreManagementService.loading();
 
       // Il mese visualizzato viene impostato sul mese corrente solo al primo
       // caricamento, per non annullare la navigazione manuale dell'utente

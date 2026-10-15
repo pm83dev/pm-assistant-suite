@@ -292,6 +292,14 @@ abbr[title] {
   background-color: #1e1e1e;
 }
 
+/* Loading indicator (usato dalle pagine durante il caricamento dati) */
+.loading {
+  text-align: center;
+  padding: 24px;
+  color: #888;
+  font-style: italic;
+}
+
 /* Spinner */
 .spinner-border, .spinner-grow {
   color: #6ea8fe;

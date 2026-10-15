@@ -3,6 +3,7 @@ import { ProgettiService } from "./progetti.service";
 import { ClientiService } from "../clienti/clienti.service";
 import { Cliente, Progetto } from "../../models/models";
 import { forkJoin, tap } from "rxjs";
+import { withRetry } from "../http/retry";
 
 @Injectable({
   providedIn: 'root',
@@ -23,27 +24,35 @@ export class ProjectManagementService {
   loading = this.#loading.asReadonly();
 
   constructor(){
-    this.initDataLoading();
+    this.loadData();
   }
- private initDataLoading(): void {
-     this.#loading.set(true);
-     forkJoin({
-       progetti: this.projectService.getProgetti(),
-       clienti: this.clientService.getClient(),
-     })
-       .subscribe({
-         next: ({progetti, clienti }) => {
-           this.#progetti.set(progetti);
-           this.#clienti.set(clienti);
-         },
-         error: (err) => {
-           console.error('Errore nel caricamento:', err);
-         },
-       })
-       .add(() => {
-         this.#loading.set(false);
-       });
-   }
+
+  /**
+   * (R)carica progetti e clienti dal backend. Viene chiamata all'avvio e di
+   * nuovo ad ogni cambio di pagina (vedi app.config.ts), così i dati sono
+   * sempre freschi quando l'utente entra in una pagina.
+   */
+  loadData(): void {
+      this.#loading.set(true);
+      withRetry(
+        forkJoin({
+          progetti: this.projectService.getProgetti(),
+          clienti: this.clientService.getClient(),
+        })
+      )
+        .subscribe({
+          next: ({progetti, clienti }) => {
+            this.#progetti.set(progetti);
+            this.#clienti.set(clienti);
+          },
+          error: (err) => {
+            console.error('Errore nel caricamento:', err);
+          },
+        })
+        .add(() => {
+          this.#loading.set(false);
+        });
+    }
 
   // Actions: tengono #progetti sincronizzato dopo ogni chiamata HTTP andata a buon fine
   addProgetto(progetto: Omit<Progetto, 'id'>) {

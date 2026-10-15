@@ -4,6 +4,7 @@ import { ProgettiService } from '../progetti/progetti.service';
 import { ClientiService } from '../clienti/clienti.service';
 import { Cliente, Nota, Progetto } from '../../models/models';
 import { forkJoin, tap } from 'rxjs';
+import { withRetry } from '../http/retry';
 
 @Injectable({ providedIn: 'root' })
 export class NoteManagementService {
@@ -23,16 +24,22 @@ export class NoteManagementService {
   loading = this.#loading.asReadonly();
 
   constructor() {
-    this.initDataLoading();
+    this.loadData();
   }
 
-  private initDataLoading(): void {
+  /**
+   * (R)carica note, progetti e clienti dal backend. Chiamata all'avvio e ad
+   * ogni cambio di pagina (vedi app.config.ts) per garantire dati freschi.
+   */
+  loadData(): void {
     this.#loading.set(true);
-    forkJoin({
-      note: this.noteService.getNote(),
-      progetti: this.projectService.getProgetti(),
-      clienti: this.clientService.getClient(),
-    })
+    withRetry(
+      forkJoin({
+        note: this.noteService.getNote(),
+        progetti: this.projectService.getProgetti(),
+        clienti: this.clientService.getClient(),
+      })
+    )
       .subscribe({
         next: ({ note, progetti, clienti }) => {
           this.#note.set(note);

@@ -6,6 +6,7 @@ import { Cliente, OraLavorata, Progetto } from '../../models/models';
 import { ClientiService } from '../clienti/clienti.service';
 import { ProgettiService } from '../progetti/progetti.service';
 import { OreService } from './ore.service';
+import { withRetry } from '../http/retry';
 
 export interface MonthView {
   month: string;
@@ -54,7 +55,7 @@ export class OreManagementService {
   currentMonthIndexSig = this.#currentMonthIndex.asReadonly();
 
   constructor() {
-    this.initDataLoading();
+    this.loadData();
     // Ricostruisce il calendario ogni volta che le ore lavorate cambiano
     // (caricamento iniziale asincrono oppure aggiunta/modifica/eliminazione)
     effect(() => {
@@ -62,13 +63,19 @@ export class OreManagementService {
     });
   }
 
-  private initDataLoading(): void {
+  /**
+   * (R)carica ore, progetti e clienti dal backend. Chiamata all'avvio e ad
+   * ogni cambio di pagina (vedi app.config.ts) per garantire dati freschi.
+   */
+  loadData(): void {
     this.#loading.set(true);
-    forkJoin({
-      ore: this.oreService.getOreLavorate(),
-      progetti: this.progettiService.getProgetti(),
-      clienti: this.clientiService.getClient(),
-    })
+    withRetry(
+      forkJoin({
+        ore: this.oreService.getOreLavorate(),
+        progetti: this.progettiService.getProgetti(),
+        clienti: this.clientiService.getClient(),
+      })
+    )
       .subscribe({
         next: ({ ore, progetti, clienti }) => {
           this.#oreLavorate.set(ore);

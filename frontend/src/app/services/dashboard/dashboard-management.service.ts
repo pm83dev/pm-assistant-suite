@@ -3,6 +3,7 @@ import { forkJoin, tap } from 'rxjs';
 import { ClientiService } from '../clienti/clienti.service';
 import { ProgettiService } from '../progetti/progetti.service';
 import { OreService } from '../ore/ore.service';
+import { withRetry } from '../http/retry';
 
 interface ProgettoConOre {
   progetto: { id: number; nome: string; clienteId: number; clienteNome?: string };
@@ -23,6 +24,7 @@ export class DashboardManagementService {
   #oreUltimoMese = signal<number>(0);
   #meseCorrente = signal<string>('');
   #progettiConTotali = signal<ProgettoConOre[]>([]);
+  #loading = signal<boolean>(false);
 
   totalClienti = this.#totalClienti.asReadonly();
   totalProgetti = this.#totalProgetti.asReadonly();
@@ -30,18 +32,27 @@ export class DashboardManagementService {
   oreUltimoMese = this.#oreUltimoMese.asReadonly();
   meseCorrente = this.#meseCorrente.asReadonly();
   progettiConTotali = this.#progettiConTotali.asReadonly();
+  loading = this.#loading.asReadonly();
 
   constructor() {
-    this.loadAll();
+    this.loadData();
   }
 
-  loadAll(): void {
-    forkJoin({
-      clienti: this.clientiService.getClient(),
-      progetti: this.progettiService.getProgetti(),
-      ore: this.oreService.getOreLavorate(),
-      riepilogo: this.oreService.getRiepilogoProgetti(),
-    }).subscribe({
+  /**
+   * (R)carica clienti, progetti, ore e riepilogo dal backend. Chiamata
+   * all'avvio e ad ogni cambio di pagina (vedi app.config.ts) per garantire
+   * dati freschi.
+   */
+  loadData(): void {
+    this.#loading.set(true);
+    withRetry(
+      forkJoin({
+        clienti: this.clientiService.getClient(),
+        progetti: this.progettiService.getProgetti(),
+        ore: this.oreService.getOreLavorate(),
+        riepilogo: this.oreService.getRiepilogoProgetti(),
+      })
+    ).subscribe({
       next: ({ clienti, progetti, ore, riepilogo }) => {
         this.#totalClienti.set(clienti.length);
         this.#totalProgetti.set(progetti.length);
@@ -58,6 +69,11 @@ export class DashboardManagementService {
           }))
         );
       },
+      error: (err) => {
+        console.error('Errore nel caricamento dashboard:', err);
+      },
+    }).add(() => {
+      this.#loading.set(false);
     });
 
     this.updateMeseOre(new Date());

@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { tap } from 'rxjs';
 import { Cliente } from '../../models/models';
 import { ClientiService } from './clienti.service';
+import { withRetry } from '../http/retry';
 
 @Injectable({
   providedIn: 'root',
@@ -18,12 +19,16 @@ export class ClienteManagementService {
   loading = this.#loading.asReadonly();
 
   constructor() {
-    this.loadClienti();
+    this.loadData();
   }
 
-  private loadClienti(): void {
+  /**
+   * (R)carica i clienti dal backend. Chiamata all'avvio e ad ogni cambio di
+   * pagina (vedi app.config.ts) per garantire dati sempre freschi.
+   */
+  loadData(): void {
     this.#loading.set(true);
-    this.clientiService.getClient().subscribe({
+    withRetry(this.clientiService.getClient()).subscribe({
       next: (data) => this.#clienti.set(data),
       error: (err) => console.error('Errore nel caricamento clienti:', err),
       complete: () => this.#loading.set(false),

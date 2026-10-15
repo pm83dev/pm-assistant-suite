@@ -4,6 +4,11 @@
     <button class="btn btn-primary" (click)="openNewForm()">+ Nuovo Progetto</button>
   </div>
 
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading">Caricamento...</div>
+  }
+
   <!-- Form -->
   @if (showForm) {
     <div class="form-container">

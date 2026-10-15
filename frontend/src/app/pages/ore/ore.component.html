@@ -27,6 +27,11 @@
     </div>
   </div>
 
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading">Caricamento...</div>
+  }
+
   <!-- Form -->
   @if (showForm) {
     <div class="form-overlay" (click)="closeForm()">
