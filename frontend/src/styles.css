@@ -333,3 +333,41 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Dashboard: grafico a barre */
+.chart-bars {
+  align-items: flex-end;
+}
+
+.chart-bars .bar-col {
+  height: 100%;
+  min-width: 0;
+}
+
+.chart-bars .bar {
+  width: 70%;
+  max-width: 28px;
+  background: linear-gradient(180deg, #4dabf7, #1971c2);
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+}
+
+.chart-bars .bar:hover {
+  background: linear-gradient(180deg, #74c0fc, #1c7ed6);
+}
+
+.chart-bars .bar-value {
+  color: #9ecbff;
+  font-size: 0.65rem;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.chart-bars .bar-label {
+  font-size: 0.6rem;
+  margin-top: 4px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}

@@ -92,12 +92,13 @@ public class AuthController : ControllerBase
             var tokenHandler = new JwtSecurityTokenHandler();
             var validationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = true,
-                ValidateAudience = true,
+                // Allineato al middleware di autenticazione (Program.cs):
+                // issuer/audience non vengono validati perché il token è
+                // generato internamente e la chiave simmetrica è sufficiente.
+                ValidateIssuer = false,
+                ValidateAudience = false,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSection["Issuer"],
-                ValidAudience = jwtSection["Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
             };
 
