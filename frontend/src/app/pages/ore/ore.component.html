@@ -32,54 +32,56 @@
     <div class="loading">Caricamento...</div>
   }
 
-  <!-- Form -->
+  <!-- Form modale -->
   @if (showForm) {
-    <div class="form-overlay" (click)="closeForm()">
+    <div class="modal-overlay" (click)="closeForm()">
       <div class="form-container" (click)="$event.stopPropagation()">
-        <div class="form-header">
+        <div class="modal-header">
           <h3>{{ editMode ? 'Modifica Registrazione' : 'Nuova Registrazione' }}</h3>
-          <button type="button" class="form-close" (click)="closeForm()" aria-label="Chiudi">
-            &times;
-          </button>
+          <button type="button" class="modal-close" (click)="closeForm()" aria-label="Chiudi">&times;</button>
         </div>
         <form (ngSubmit)="save()">
           <div class="form-group">
-            <label>Progetto *</label>
-            <select [(ngModel)]="form.progettoId" name="progettoId" required>
+            <label for="oreProgetto">Progetto *</label>
+            <select id="oreProgetto" [(ngModel)]="form.progettoId" name="progettoId" required>
               <option [ngValue]="0">-- Seleziona Progetto --</option>
               @for (p of progetti; track p.id) {
                 <option [ngValue]="p.id">{{ p.nome }}</option>
               }
             </select>
           </div>
-          <div class="form-group">
-            <label>Data *</label>
-            <input type="date" [(ngModel)]="form.data" name="data" required />
+          <div class="form-row">
+            <div class="form-group">
+              <label for="oreData">Data *</label>
+              <input id="oreData" type="date" [(ngModel)]="form.data" name="data" required />
+            </div>
+            <div class="form-group">
+              <label for="oreValore">Ore *</label>
+              <input
+                id="oreValore"
+                type="number"
+                [(ngModel)]="form.ore"
+                name="ore"
+                min="0.25"
+                step="0.25"
+                required
+                placeholder="Es: 2.5"
+              />
+            </div>
           </div>
           <div class="form-group">
-            <label>Ore *</label>
-            <input
-              type="number"
-              [(ngModel)]="form.ore"
-              name="ore"
-              min="0.25"
-              step="0.25"
-              required
-              placeholder="Es: 2.5"
-            />
-          </div>
-          <div class="form-group">
-            <label>Descrizione</label>
+            <label for="oreDescrizione">Descrizione</label>
             <textarea
+              id="oreDescrizione"
               [(ngModel)]="form.descrizione"
               name="descrizione"
               rows="3"
               placeholder="Cosa hai fatto?"
             ></textarea>
           </div>
-          <div class="form-actions">
+          <div class="modal-actions">
             <button type="submit" class="btn btn-success">Salva</button>
-            <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+            <button type="button" class="btn btn-ghost" (click)="closeForm()">Annulla</button>
           </div>
         </form>
       </div>
@@ -89,8 +91,8 @@
   <!-- Riepilogo -->
   <div class="summary">
     <div class="summary-total">
-      <strong>Totale Ore:</strong> {{ getTotalOre().toFixed(1) }}h
-      <strong class="ms-5">Totale Importo:</strong> {{ getTotalImporto().toFixed(2) }}€
+      <span class="stat"><span class="stat-label">Totale Ore</span><span class="stat-value">{{ getTotalOre().toFixed(1) }}h</span></span>
+      <span class="stat"><span class="stat-label">Totale Importo</span><span class="stat-value">{{ getTotalImporto().toFixed(2) }}€</span></span>
     </div>
     @if (progetti.length > 0) {
       <div class="summary-breakdown">
@@ -108,8 +110,7 @@
     <!-- Calendario Ore - Carosello Mesi -->
     @if (calendarView.length > 0) {
       <div class="calendar-container">
-        <div class="card calendar-card">
-          <div class="card-body p-0">
+        <div class="calendar-card">
             <div class="carousel-wrapper">
               <button
                 class="btn-nav"
@@ -169,7 +170,6 @@
                 Nessuna registrazione presente. Aggiungi la tua prima ora lavorata!
               </div>
             }
-          </div>
         </div>
 
         <!-- Indicatori Carosello -->
@@ -192,52 +192,37 @@
     <!-- Dettagli giorno -->
     @if (selectedDayEntries.length > 0) {
       <div class="day-details">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3 class="mb-0">{{ selectedDayDate }}</h3>
+        <div class="day-details-head">
+          <h3>{{ selectedDayDate }}</h3>
           <div class="day-details-actions">
-            <button class="btn btn-sm btn-primary" (click)="addOraForSelectedDay()">
-              + Aggiungi ore
-            </button>
-            <button class="btn btn-sm btn-secondary" (click)="closeDayDetails()">Chiudi</button>
+            <button class="btn btn-sm btn-primary" (click)="addOraForSelectedDay()">+ Aggiungi ore</button>
+            <button class="btn btn-sm btn-ghost" (click)="closeDayDetails()">Chiudi</button>
           </div>
         </div>
-        <hr />
-        <div class="row day-entries">
+        <div class="day-entries">
           @for (o of selectedDayEntries; track o.id) {
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <div class="badges">
-                    <span
-                      class="badge"
-                      [style.background]="
-                        getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))
-                      "
-                      [style.color]="'#e8f0fe'"
-                      [style.border]="
-                        '1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))
-                      "
-                      >{{ getClienteNomeDaProgetto(o.progettoId) }}</span
-                    >
-                    <span
-                      class="badge"
-                      [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))"
-                      [style.color]="'#e8f5e9'"
-                      [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))"
-                      >{{ getProgettoNome(o.progettoId) }}</span
-                    >
-                  </div>
-                  <div class="ore-amount">{{ o.ore }}h</div>
+            <div class="entry-card">
+              <div class="entry-top">
+                <div class="badges">
+                  <span
+                    class="badge"
+                    [style.background]="getBadgeBackground(getClienteNomeDaProgetto(o.progettoId))"
+                    [style.border]="'1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(o.progettoId))"
+                  >{{ getClienteNomeDaProgetto(o.progettoId) }}</span>
+                  <span
+                    class="badge"
+                    [style.background]="getBadgeBackground(getProgettoNome(o.progettoId))"
+                    [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(o.progettoId))"
+                  >{{ getProgettoNome(o.progettoId) }}</span>
                 </div>
-                <div class="card-body">
-                  @if (o.descrizione) {
-                    <p><strong>Dettaglio:</strong> {{ o.descrizione }}</p>
-                  }
-                </div>
-                <div class="card-actions">
-                  <button class="btn btn-sm btn-edit" (click)="openEditForm(o)">Modifica</button>
-                  <button class="btn btn-sm btn-delete" (click)="delete(o.id)">Elimina</button>
-                </div>
+                <span class="ore-amount">{{ o.ore }}h</span>
+              </div>
+              @if (o.descrizione) {
+                <p class="entry-desc">{{ o.descrizione }}</p>
+              }
+              <div class="entry-actions">
+                <button class="btn btn-sm btn-edit" (click)="openEditForm(o)">Modifica</button>
+                <button class="btn btn-sm btn-delete" (click)="delete(o.id)">Elimina</button>
               </div>
             </div>
           }

@@ -14,7 +14,7 @@ import { Nota } from '../../models/models';
 export class NoteComponent {
 
   private noteManagement = inject(NoteManagementService);
-
+  expandedId: number | null = null;
   note = this.noteManagement.note;
   progetti = this.noteManagement.progetti;
   clienti = this.noteManagement.clienti;
@@ -29,6 +29,14 @@ export class NoteComponent {
     contenuto: '',
     progettoId: 0,
   };
+
+  toggleAccordion(noteId: number): void {
+    this.expandedId = this.expandedId === noteId ? null : noteId;
+  }
+
+  isExpanded(noteId: number): boolean {
+    return this.expandedId === noteId;
+  }
 
   openNewForm(): void {
     this.editMode = false;

@@ -1,221 +1,189 @@
+<div class="container">
 <!-- Loading -->
 @if (loading) {
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="loading">Caricamento...</div>
-    </div>
-  </div>
+  <div class="loading">Caricamento...</div>
 }
 
 <!-- KPI -->
-<div class="row mb-4 g-3">
-  <div class="col-md-3 col-6">
-    <div class="card shadow-sm border-primary h-100">
-      <div class="card-body text-center">
-        <h3 class="text-primary mb-0">{{ dashboard.totalClienti() }}</h3>
-        <small class="text-muted">Clienti</small>
-      </div>
-    </div>
+<div class="kpi-row">
+  <div class="kpi-card" style="--kpi-color: #3d8bfd">
+    <div class="kpi-value">{{ dashboard.totalClienti() }}</div>
+    <div class="kpi-label">Clienti</div>
   </div>
-  <div class="col-md-3 col-6">
-    <div class="card shadow-sm border-success h-100">
-      <div class="card-body text-center">
-        <h3 class="text-success mb-0">{{ dashboard.totalProgetti() }}</h3>
-        <small class="text-muted">Progetti</small>
-      </div>
-    </div>
+  <div class="kpi-card" style="--kpi-color: #28a745">
+    <div class="kpi-value">{{ dashboard.totalProgetti() }}</div>
+    <div class="kpi-label">Progetti</div>
   </div>
-  <div class="col-md-3 col-6">
-    <div class="card shadow-sm border-warning h-100">
-      <div class="card-body text-center">
-        <h3 class="text-warning mb-0">{{ dashboard.totalOre().toFixed(1) }}</h3>
-        <small class="text-muted">Ore Totali</small>
-      </div>
-    </div>
+  <div class="kpi-card" style="--kpi-color: #ffc107">
+    <div class="kpi-value">{{ dashboard.totalOre().toFixed(1) }}</div>
+    <div class="kpi-label">Ore Totali</div>
   </div>
-  <div class="col-md-3 col-6">
-    <div class="card shadow-sm border-info h-100">
-      <div class="card-body text-center">
-        <div class="d-flex justify-content-center align-items-center gap-2 mb-1">
-          <button class="btn btn-sm btn-outline-info" (click)="cambiaMese(-1)">&#9664;</button>
-          <h3 class="text-info mb-0" style="min-width: 120px">
-            {{ dashboard.oreUltimoMese().toFixed(1) }}
-          </h3>
-          <button class="btn btn-sm btn-outline-info" (click)="cambiaMese(1)">&#9654;</button>
-        </div>
-        <small class="text-muted">Ore {{ dashboard.meseCorrente() }}</small>
-      </div>
+  <div class="kpi-card" style="--kpi-color: #17a2b8">
+    <div class="kpi-nav">
+      <button class="btn-nav" (click)="cambiaMese(-1)" title="Mese precedente">&#9664;</button>
+      <div class="kpi-value">{{ dashboard.oreUltimoMese().toFixed(1) }}</div>
+      <button class="btn-nav" (click)="cambiaMese(1)" title="Mese successivo">&#9654;</button>
     </div>
+    <div class="kpi-label">Ore {{ dashboard.meseCorrente() }}</div>
   </div>
 </div>
 
 <!-- Grafici -->
-<div class="row mb-4 g-3">
-  <div class="col-lg-7">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-dark-header">
-        <h5 class="mb-0">Ore ultime 2 settimane</h5>
-      </div>
-      <div class="card-body">
-        @if (dashboard.orePerGiorno().length > 0) {
-          <div class="chart-bars d-flex align-items-end gap-1" style="height: 180px">
-            @for (p of dashboard.orePerGiorno(); track p.label) {
-              <div class="bar-col flex-fill d-flex flex-column justify-content-end align-items-center">
-                <small class="bar-value">{{ p.valore > 0 ? p.valore.toFixed(1) : '' }}</small>
-                <div
-                  class="bar"
-                  [style.height.%]="altezzaBarra(p.valore, dashboard.orePerGiorno())"
-                  [title]="p.label + ': ' + p.valore.toFixed(1) + ' h'"
-                ></div>
-                <small class="bar-label text-muted">{{ p.label }}</small>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="text-muted text-center py-4">Nessun dato disponibile</div>
-        }
-      </div>
+<div class="charts-row">
+  <div class="card">
+    <div class="card-header">
+      <h5>Ore ultime 2 settimane</h5>
+    </div>
+    <div class="card-body">
+      @if (dashboard.orePerGiorno().length > 0) {
+        <div class="chart-bars">
+          @for (p of dashboard.orePerGiorno(); track p.label) {
+            <div class="bar-col">
+              <small class="bar-value">{{ p.valore > 0 ? p.valore.toFixed(1) : '' }}</small>
+              <div
+                class="bar"
+                [style.height.%]="altezzaBarra(p.valore, dashboard.orePerGiorno())"
+                [title]="p.label + ': ' + p.valore.toFixed(1) + ' h'"
+              ></div>
+              <small class="bar-label">{{ p.label }}</small>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">Nessun dato disponibile</div>
+      }
     </div>
   </div>
-  <div class="col-lg-5">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-dark-header">
-        <h5 class="mb-0">Ore per progetto</h5>
-      </div>
-      <div class="card-body">
-        @if (dashboard.orePerProgettoGrafico().length > 0) {
-          <div class="d-flex flex-column gap-2">
-            @for (p of dashboard.orePerProgettoGrafico(); track p.label) {
-              <div>
-                <div class="d-flex justify-content-between">
-                  <small class="text-truncate me-2" [title]="p.label">{{ p.label }}</small>
-                  <small class="text-muted">{{ p.valore.toFixed(1) }} h</small>
-                </div>
-                <div class="progress" style="height: 8px">
-                  <div
-                    class="progress-bar bg-primary"
-                    [style.width.%]="percentualeProgetto(p.valore, dashboard.orePerProgettoGrafico())"
-                  ></div>
-                </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5>Ore per progetto</h5>
+    </div>
+    <div class="card-body">
+      @if (dashboard.orePerProgettoGrafico().length > 0) {
+        <div class="progress-list">
+          @for (p of dashboard.orePerProgettoGrafico(); track p.label) {
+            <div>
+              <div class="progress-item-head">
+                <small class="progress-item-name" [title]="p.label">{{ p.label }}</small>
+                <small class="progress-item-value">{{ p.valore.toFixed(1) }} h</small>
               </div>
-            }
-          </div>
-        } @else {
-          <div class="text-muted text-center py-4">Nessun dato disponibile</div>
-        }
-      </div>
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  [style.width.%]="percentualeProgetto(p.valore, dashboard.orePerProgettoGrafico())"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">Nessun dato disponibile</div>
+      }
     </div>
   </div>
 </div>
 
 <!-- Riepilogo per progetto con dettaglio e export -->
-<div class="row mb-4">
-  <div class="col-md-12">
-    <div class="card shadow-sm">
-      <div class="card-header bg-dark-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Ore per progetto</h5>
-        <small class="text-light-3">Clicca su un progetto per il dettaglio</small>
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-dark table-hover align-middle mb-0">
-          <thead>
-            <tr>
-              <th style="width: 40px"></th>
-              <th>Cliente</th>
-              <th>Progetto</th>
-              <th class="text-end">Ore Totali</th>
-              <th class="text-end" style="width: 160px">Esporta</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of dashboard.progettiConTotali(); track item.progetto.id) {
-              <tr (click)="toggleProgetto(item.progetto.id)" class="cursor-pointer">
-                <td class="text-center">
-                  @if (progettoAperto() === item.progetto.id) {
-                    <i class="bi bi-chevron-up"></i>
-                  } @else {
-                    <i class="bi bi-chevron-down"></i>
-                  }
-                </td>
-                <td>{{ item.progetto.clienteNome }}</td>
-                <td>{{ item.progetto.nome }}</td>
-                <td class="text-end">{{ item.totaleOre.toFixed(1) }} h</td>
-                <td class="text-end">
-                  <button
-                    class="btn btn-sm btn-outline-success"
-                    (click)="esportaProgetto(item, $event)"
-                    [title]="'Esporta Excel: ' + item.progetto.nome"
-                  >
-                    <i class="bi bi-file-earmark-excel"></i> Excel
-                  </button>
-                </td>
-              </tr>
-              @if (progettoAperto() === item.progetto.id) {
-                <tr>
-                  <td colspan="5" class="bg-dark-subtle">
-                    <div class="p-3">
-                      @if (oreProgetto(item.progetto.id).length > 0) {
-                        <table class="table table-sm table-bordered table-striped mb-0">
-                          <thead>
-                            <tr>
-                              <th style="width: 120px">Giorno</th>
-                              <th class="text-end" style="width: 90px">Ore</th>
-                              <th>Attività</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (riga of righeProgetto(item.progetto.id); track $index) {
-                              <tr>
-                                <td>{{ riga.data }}</td>
-                                <td class="text-end">{{ riga.ore.toFixed(1) }}</td>
-                                <td>{{ riga.attivita }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                          <tfoot>
-                            <tr class="fw-bold">
-                              <td>TOTALE</td>
-                              <td class="text-end">{{ item.totaleOre.toFixed(1) }}</td>
-                              <td></td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      } @else {
-                        <div class="text-muted">Nessuna ora registrata per questo progetto.</div>
-                      }
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+<div class="card projects-section">
+  <div class="card-header">
+    <h5>Ore per progetto</h5>
+    <span class="hint">Clicca su un progetto per il dettaglio</span>
   </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 40px"></th>
+        <th>Cliente</th>
+        <th>Progetto</th>
+        <th class="text-end">Ore Totali</th>
+        <th class="text-end" style="width: 160px">Esporta</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of dashboard.progettiConTotali(); track item.progetto.id) {
+        <tr
+          class="project-row"
+          [class.expanded]="progettoAperto() === item.progetto.id"
+          (click)="toggleProgetto(item.progetto.id)"
+        >
+          <td style="text-align: center">
+            <span class="chevron" [class.open]="progettoAperto() === item.progetto.id">&#9660;</span>
+          </td>
+          <td>{{ item.progetto.clienteNome }}</td>
+          <td>{{ item.progetto.nome }}</td>
+          <td class="text-end">{{ item.totaleOre.toFixed(1) }} h</td>
+          <td class="text-end">
+            <button
+              class="btn-nav"
+              style="width: auto; border-radius: 6px; padding: 5px 12px; font-size: 12px"
+              (click)="esportaProgetto(item, $event)"
+              [title]="'Esporta Excel: ' + item.progetto.nome"
+            >
+              &#128196; Excel
+            </button>
+          </td>
+        </tr>
+        @if (progettoAperto() === item.progetto.id) {
+          <tr>
+            <td colspan="5" class="detail-cell">
+              @if (oreProgetto(item.progetto.id).length > 0) {
+                <table class="detail-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 120px">Giorno</th>
+                      <th class="text-end" style="width: 90px">Ore</th>
+                      <th>Attività</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (riga of righeProgetto(item.progetto.id); track $index) {
+                      <tr>
+                        <td>{{ riga.data }}</td>
+                        <td class="text-end">{{ riga.ore.toFixed(1) }}</td>
+                        <td>{{ riga.attivita }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td>TOTALE</td>
+                      <td class="text-end">{{ item.totaleOre.toFixed(1) }}</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              } @else {
+                <div class="empty-state">Nessuna ora registrata per questo progetto.</div>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
 </div>
 
 <!-- Accesso rapido -->
-<div class="row mb-4">
-  <div class="col-md-12">
-    <div class="card shadow-sm">
-      <div class="card-header bg-dark-header">
-        <h5 class="mb-0">Accesso Rapido</h5>
-      </div>
-      <div class="card-body">
-        <div class="btn-group w-100" role="group">
-          <a routerLink="/clienti" class="btn btn-outline-primary me-2">
-            <i class="bi bi-people"></i> Clienti
-          </a>
-          <a routerLink="/progetti" class="btn btn-outline-success me-2">
-            <i class="bi bi-folder"></i> Progetti
-          </a>
-          <a routerLink="/ore" class="btn btn-outline-warning me-2">
-            <i class="bi bi-clock"></i> Riepilogo Ore
-          </a>
-          <a routerLink="/note" class="btn btn-outline-info"> <i class="bi bi-sticky"></i> Note </a>
-        </div>
-      </div>
+<div class="card">
+  <div class="card-header">
+    <h5>Accesso Rapido</h5>
+  </div>
+  <div class="card-body">
+    <div class="quick-access-row">
+      <a routerLink="/clienti" class="qa-btn qa-clienti">
+        <span class="qa-icon">&#128101;</span> Clienti
+      </a>
+      <a routerLink="/progetti" class="qa-btn qa-progetti">
+        <span class="qa-icon">&#128193;</span> Progetti
+      </a>
+      <a routerLink="/ore" class="qa-btn qa-ore">
+        <span class="qa-icon">&#9200;</span> Riepilogo Ore
+      </a>
+      <a routerLink="/note" class="qa-btn qa-note">
+        <span class="qa-icon">&#128221;</span> Note
+      </a>
     </div>
   </div>
+</div>
 </div>

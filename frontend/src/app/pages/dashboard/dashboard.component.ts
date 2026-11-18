@@ -17,6 +17,7 @@ interface ProgettoRiga {
   standalone: true,
   imports: [RouterLink],
   templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent {
   dashboard = inject(DashboardManagementService);

@@ -12,57 +12,66 @@
   <!-- Form -->
   @if (showForm) {
     <div class="form-container">
-    <h3>{{ editMode ? 'Modifica Nota' : 'Nuova Nota' }}</h3>
-    <form (ngSubmit)="save()">
-      <div class="form-group">
-        <label>Progetto *</label>
-        <select [(ngModel)]="form.progettoId" name="progettoId" required>
-          <option value="0">-- Seleziona Progetto --</option>
-          @for (p of progetti(); track p.id) {
-            <option [value]="p.id">{{ p.nome }}</option>
-          }
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Titolo</label>
-        <input type="text" [(ngModel)]="form.titolo" name="titolo" placeholder="Titolo della nota" />
-      </div>
-      <div class="form-group">
-        <label>Contenuto *</label>
-        <textarea [(ngModel)]="form.contenuto" name="contenuto" rows="5" required placeholder="Scrivi la tua nota..."></textarea>
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-success">Salva</button>
-        <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
-      </div>
-    </form>
+      <h3>{{ editMode ? 'Modifica Nota' : 'Nuova Nota' }}</h3>
+      <form (ngSubmit)="save()">
+        <div class="form-group">
+          <label>Progetto *</label>
+          <select [(ngModel)]="form.progettoId" name="progettoId" required>
+            <option value="0">-- Seleziona Progetto --</option>
+            @for (p of progetti(); track p.id) {
+              <option [value]="p.id">{{ p.nome }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Titolo</label>
+          <input type="text" [(ngModel)]="form.titolo" name="titolo" placeholder="Titolo della nota" />
+        </div>
+        <div class="form-group">
+          <label>Contenuto *</label>
+          <textarea [(ngModel)]="form.contenuto" name="contenuto" rows="5" required placeholder="Scrivi la tua nota..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success">Salva</button>
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+        </div>
+      </form>
     </div>
   }
 
-  <!-- Lista Note -->
+  <!-- Lista Note - Accordion -->
   <div class="list-container">
     @for (n of note(); track n.id) {
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <span class="date">{{ formatDate(n.dataCreazione) }}</span>
-          <span class="badge" [style.background]="getBadgeBackground(getClienteNomeDaProgetto(n.progettoId))" [style.color]="'#e8f0fe'" [style.border]="'1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(n.progettoId))">{{ getClienteNomeDaProgetto(n.progettoId) }}</span>
-          <span class="badge" [style.background]="getBadgeBackground(getProgettoNome(n.progettoId))" [style.color]="'#e8f5e9'" [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(n.progettoId))">{{ getProgettoNome(n.progettoId) }}</span>
-        </div>
-        <div class="actions">
-          <button class="btn btn-sm btn-edit" (click)="openEditForm(n)">Modifica</button>
-          <button class="btn btn-sm btn-delete" (click)="delete(n.id)">Elimina</button>
+      <div class="acc-item" [class.expanded]="isExpanded(n.id)">
+        <button class="acc-header" type="button" (click)="toggleAccordion(n.id)"
+                [attr.aria-expanded]="isExpanded(n.id)">
+          <span class="acc-title">{{ n.titolo || 'Nota senza titolo' }}</span>
+          <span class="acc-date">{{ formatDate(n.dataCreazione) }}</span>
+          <span class="acc-chevron" aria-hidden="true">&#9662;</span>
+        </button>
+
+        <div class="acc-body" [class.open]="isExpanded(n.id)">
+          <div class="acc-meta">
+            <span class="badge" [style.background]="getBadgeBackground(getClienteNomeDaProgetto(n.progettoId))"
+                  [style.color]="'#e8f0fe'"
+                  [style.border]="'1px solid ' + getBadgeBorder(getClienteNomeDaProgetto(n.progettoId))">
+              {{ getClienteNomeDaProgetto(n.progettoId) }}
+            </span>
+            <span class="badge" [style.background]="getBadgeBackground(getProgettoNome(n.progettoId))"
+                  [style.color]="'#e8f0fe'"
+                  [style.border]="'1px solid ' + getBadgeBorder(getProgettoNome(n.progettoId))">
+              {{ getProgettoNome(n.progettoId) }}
+            </span>
+          </div>
+          <p class="acc-content">{{ n.contenuto }}</p>
+          <div class="actions">
+            <button class="btn btn-sm btn-edit" (click)="openEditForm(n)">Modifica</button>
+            <button class="btn btn-sm btn-delete" (click)="delete(n.id)">Elimina</button>
+          </div>
         </div>
       </div>
-      <div class="card-body">
-        @if (n.titolo) {
-          <h4>{{ n.titolo }}</h4>
-        }
-        <p>{{ n.contenuto }}</p>
-      </div>
-    </div>
     } @empty {
-    <div class="empty">Nessuna nota presente. Aggiungi la tua prima nota!</div>
+      <div class="empty">Nessuna nota presente. Aggiungi la tua prima nota!</div>
     }
   </div>
 </div>
