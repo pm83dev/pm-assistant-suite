@@ -24,7 +24,7 @@ No automated test framework exists. Validation is done through live agent intera
 ## Configuration
 
 `pm-code/appsettings.json` controls:
-- `LlmSettings:BaseUrl` — LLM server URL (default: `http://llm-coding.pm-softwareautomation.com`)
+- `LlmSettings:BaseUrl` — LLM server URL (default: `http://llm-address`)
 - `LlmSettings:Model` — Model name sent in API requests
 - `AgentSettings:Workspace` — Agent's sandboxed working directory (default: `./AgentWorkspace`)
 - `AgentSettings:MaxSteps` — Max tool-call iterations per user turn (default: 20)
