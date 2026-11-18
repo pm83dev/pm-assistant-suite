@@ -65,6 +65,8 @@ export class LoginComponent {
           error: (err) => {
             console.error('Login failed', err);
             this.error = 'Credenziali non valide';
+          },
+          complete: () => {
             this.loading = false;
           },
         });
