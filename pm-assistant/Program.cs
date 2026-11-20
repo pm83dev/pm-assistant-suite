@@ -115,11 +115,15 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Origin consentiti leggibili da appsettings.json, sezione "Cors:AllowedOrigins"
+var allowedOrigins = builder.Configuration.GetSection("Cors")
+    .GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendCors", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:5000")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -156,6 +160,12 @@ if (!string.IsNullOrEmpty(telegramSettings.BotToken))
         Console.WriteLine($"[WARN] Telegram bot start failed: {ex.Message}");
     }
 }
+
+// ── CORS: log di avvio (fail-closed se la sezione è vuota/assente) ────────────
+if (allowedOrigins.Length == 0)
+    Console.WriteLine("[WARN] CORS: sezione 'Cors:AllowedOrigins' vuota o assente in appsettings.json — tutte le richieste cross-origin verranno rifiutate.");
+else
+    Console.WriteLine($"[INFO] CORS origin attivi: {string.Join(", ", allowedOrigins)}");
 
 // ── HTTP Pipeline ─────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
