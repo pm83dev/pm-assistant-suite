@@ -6,7 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>OreTracking</AssemblyName>
     <RootNamespace>OreTracking</RootNamespace>
+    <SpaRoot>..\frontend\</SpaRoot>
+    <SpaHost>http://localhost:4200</SpaHost>
+    <DefaultItemExcludes>$(DefaultItemExcludes);frontend\**</DefaultItemExcludes>
   </PropertyGroup>
+
+  <!-- Esclude il database SQLite dal publish: in production si mantiene quello esistente -->
+  <ItemGroup>
+    <None Remove="app.db" />
+    <Content Remove="app.db" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.28" />
@@ -19,5 +28,19 @@
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.28" />
   </ItemGroup>
+
+  <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+    <Exec Command="npm install" WorkingDirectory="$(SpaRoot)" />
+    <Exec Command="npm run build" WorkingDirectory="$(SpaRoot)" />
+    <ItemGroup>
+      <!-- Angular (builder esbuild) genera l'app servibile in dist/ore-web/browser/, non in dist/ore-web/ -->
+      <DistFiles Include="$(SpaRoot)dist\ore-web\browser\**" />
+      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>

@@ -103,7 +103,7 @@ builder.Services.AddScoped<IDataRepository, DataService>();
 
 var app = builder.Build();
 
-// Assicura che il database e le tabelle esistano (solo per sviluppo)
+// Assicura che il database e le tabelle esistano
 using var scope = app.Services.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
 dbContext.Database.EnsureCreated();
@@ -121,11 +121,6 @@ app.UseCors("FrontendCors");
 var env = app.Environment;
 if (env.IsProduction())
 {
-    app.UseStaticFiles();
-    app.UseDefaultFiles(new DefaultFilesOptions
-    {
-        DefaultFileNames = new[] { "index.html" }
-    });
     app.Use(async (context, next) =>
     {
         await next();
@@ -135,6 +130,11 @@ if (env.IsProduction())
             await next();
         }
     });
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        DefaultFileNames = new[] { "index.html" }
+    });
+    app.UseStaticFiles();
 }
 
 app.MapControllers();
